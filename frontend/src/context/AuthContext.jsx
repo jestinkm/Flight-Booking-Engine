@@ -1,6 +1,16 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../lib/axios';
 import toast from 'react-hot-toast';
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signInWithPopup,
+  signOut,
+  sendPasswordResetEmail,
+  updateProfile,
+  onAuthStateChanged
+} from 'firebase/auth';
+import { auth, googleProvider } from '../firebase';
 
 const AuthContext = createContext(null);
 
@@ -15,54 +25,150 @@ export const AuthProvider = ({ children }) => {
   });
   const [loading, setLoading] = useState(true);
 
-  // Check auth on mount
+  // Maintain user login sessions across page reloads with Firebase & Backend
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const response = await api.get('/auth/me');
-        if (response.data?.user || response.data?.data?.user) {
-          const userData = response.data.user || response.data.data.user;
-          setUser(userData);
-          localStorage.setItem('user', JSON.stringify(userData));
-        } else if (response.data && !response.data.error) {
-          setUser(response.data);
-          localStorage.setItem('user', JSON.stringify(response.data));
-        }
-      } catch (err) {
-        // Session invalid or not logged in
-        setUser(null);
-        localStorage.removeItem('user');
-      } finally {
-        setLoading(false);
-      }
-    };
+    let isMounted = true;
 
-    checkAuth();
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (!isMounted) return;
+
+      if (firebaseUser) {
+        try {
+          // Check backend session
+          const response = await api.get('/auth/me');
+          const userData = response.data?.user || response.data?.data?.user || response.data;
+          if (userData && !userData.error) {
+            setUser(userData);
+            localStorage.setItem('user', JSON.stringify(userData));
+          } else {
+            // If backend session missing, sync with Firebase user credentials
+            const idToken = await firebaseUser.getIdToken();
+            const syncRes = await api.post('/auth/google', {
+              email: firebaseUser.email,
+              name: firebaseUser.displayName || firebaseUser.email.split('@')[0],
+              picture: firebaseUser.photoURL || '',
+              googleId: firebaseUser.uid,
+              credential: idToken
+            }).catch(() => null);
+
+            const syncedUser = syncRes?.data?.data?.user || syncRes?.data?.user || {
+              email: firebaseUser.email,
+              firstName: firebaseUser.displayName ? firebaseUser.displayName.split(' ')[0] : 'Traveler',
+              lastName: firebaseUser.displayName && firebaseUser.displayName.split(' ').length > 1 ? firebaseUser.displayName.split(' ').slice(1).join(' ') : '',
+              role: 'CUSTOMER',
+              avatar: firebaseUser.photoURL || ''
+            };
+            const jwt = syncRes?.data?.data?.token || syncRes?.data?.token;
+            if (jwt) localStorage.setItem('token', jwt);
+            setUser(syncedUser);
+            localStorage.setItem('user', JSON.stringify(syncedUser));
+          }
+        } catch {
+          // Fallback to Firebase user profile if backend is unreachable
+          const fallbackUser = {
+            email: firebaseUser.email,
+            firstName: firebaseUser.displayName ? firebaseUser.displayName.split(' ')[0] : 'Traveler',
+            lastName: firebaseUser.displayName && firebaseUser.displayName.split(' ').length > 1 ? firebaseUser.displayName.split(' ').slice(1).join(' ') : '',
+            role: 'CUSTOMER',
+            avatar: firebaseUser.photoURL || ''
+          };
+          setUser(fallbackUser);
+          localStorage.setItem('user', JSON.stringify(fallbackUser));
+        } finally {
+          if (isMounted) setLoading(false);
+        }
+      } else {
+        // No Firebase user: check if there's a backend session (e.g., admin or existing JWT)
+        try {
+          const response = await api.get('/auth/me');
+          const userData = response.data?.user || response.data?.data?.user;
+          if (userData && !userData.error) {
+            setUser(userData);
+            localStorage.setItem('user', JSON.stringify(userData));
+          } else {
+            setUser(null);
+            localStorage.removeItem('user');
+          }
+        } catch {
+          setUser(null);
+          localStorage.removeItem('user');
+        } finally {
+          if (isMounted) setLoading(false);
+        }
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, []);
 
+  // Login using email/password (supporting Firebase and backend sync)
   const login = async (identifier, password) => {
+    const isEmail = identifier.includes('@');
+    let firebaseUser = null;
+    let firebaseToken = null;
+
+    // 1. Try Firebase Authentication if user entered an email
+    if (isEmail) {
+      try {
+        const cred = await signInWithEmailAndPassword(auth, identifier.trim().toLowerCase(), password);
+        firebaseUser = cred.user;
+        firebaseToken = await firebaseUser.getIdToken();
+      } catch (fbErr) {
+        console.warn('Firebase email sign-in fallback to backend:', fbErr.code);
+      }
+    }
+
+    // 2. Authenticate or sync with backend
     try {
       const response = await api.post('/auth/login', { identifier, password });
       const userData = response.data?.user || response.data?.data?.user || response.data;
       const token = response.data?.token || response.data?.data?.token;
       if (token) localStorage.setItem('token', token);
+      else if (firebaseToken) localStorage.setItem('token', firebaseToken);
+
       setUser(userData);
       localStorage.setItem('user', JSON.stringify(userData));
       toast.success('Welcome back!');
       return { success: true, user: userData };
     } catch (error) {
+      // If backend login failed but Firebase succeeded, sync user into backend
+      if (firebaseUser) {
+        try {
+          const syncRes = await api.post('/auth/google', {
+            email: firebaseUser.email,
+            name: firebaseUser.displayName || firebaseUser.email.split('@')[0],
+            googleId: firebaseUser.uid,
+            credential: firebaseToken
+          });
+          const userData = syncRes.data?.data?.user || syncRes.data?.user || {
+            email: firebaseUser.email,
+            firstName: firebaseUser.displayName ? firebaseUser.displayName.split(' ')[0] : 'Traveler',
+            role: 'CUSTOMER'
+          };
+          const jwt = syncRes.data?.data?.token || syncRes.data?.token || firebaseToken;
+          if (jwt) localStorage.setItem('token', jwt);
+          setUser(userData);
+          localStorage.setItem('user', JSON.stringify(userData));
+          toast.success('Welcome back!');
+          return { success: true, user: userData };
+        } catch (syncErr) {
+          console.error('Backend sync error:', syncErr);
+        }
+      }
+
       const message = error.response?.data?.message || error.response?.data?.error || 'Login failed. Please check your credentials.';
       toast.error(message);
       return { success: false, error: message };
     }
   };
 
-
+  // Admin Login via Backend (Super Admin, Schedule Admin, Marketing Admin)
   const adminLogin = async (identifier, password) => {
     try {
-      // Use the same /auth/login endpoint with identifier (email or username)
       const response = await api.post('/auth/login', { identifier, password });
-
       const userData = response.data?.user || response.data?.data?.user || response.data;
       const token = response.data?.token || response.data?.data?.token;
       const adminRoles = ['SUPER_ADMIN', 'SCHEDULE_ADMIN', 'MARKETING_ADMIN'];
@@ -82,13 +188,36 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-
+  // Sign up using email and password with Firebase & Backend
   const register = async (registrationData) => {
+    const { email, password, firstName, lastName, phone, username } = registrationData;
+
     try {
+      // 1. Create account in Firebase Auth
+      let firebaseUser = null;
+      let idToken = null;
+      try {
+        const cred = await createUserWithEmailAndPassword(auth, email.trim().toLowerCase(), password);
+        firebaseUser = cred.user;
+        const displayName = `${firstName || ''} ${lastName || ''}`.trim() || username || email.split('@')[0];
+        await updateProfile(firebaseUser, { displayName });
+        idToken = await firebaseUser.getIdToken();
+      } catch (fbErr) {
+        console.warn('Firebase createUser warning:', fbErr.code);
+        if (fbErr.code === 'auth/email-already-in-use') {
+          // If already in Firebase, attempt backend registration
+        } else if (fbErr.code === 'auth/weak-password') {
+          toast.error('Password is too weak. Please use at least 6 characters.');
+          return { success: false, error: fbErr.message };
+        }
+      }
+
+      // 2. Register in application backend (MongoDB)
       const response = await api.post('/auth/register', registrationData);
       const userData = response.data?.user || response.data?.data?.user || response.data;
-      const token = response.data?.token || response.data?.data?.token;
+      const token = response.data?.token || response.data?.data?.token || idToken;
       if (token) localStorage.setItem('token', token);
+
       if (userData && userData.email) {
         setUser(userData);
         localStorage.setItem('user', JSON.stringify(userData));
@@ -102,7 +231,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Logout from Firebase & Backend
   const logout = async () => {
+    try {
+      await signOut(auth);
+    } catch (fbErr) {
+      console.warn('Firebase signOut error:', fbErr);
+    }
+
     try {
       await api.post('/auth/logout');
     } catch {
@@ -115,21 +251,64 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Login with Google via Firebase
   const loginWithGoogle = async (googleData) => {
     try {
-      const response = await api.post('/auth/google', googleData);
-      const userData = response.data?.user || response.data?.data?.user || response.data;
+      let payload = googleData;
+
+      // If called without payload, trigger Firebase popup
+      if (!payload || !payload.email) {
+        const result = await signInWithPopup(auth, googleProvider);
+        const fbUser = result.user;
+        const idToken = await fbUser.getIdToken();
+        payload = {
+          email: fbUser.email,
+          name: fbUser.displayName,
+          firstName: fbUser.displayName ? fbUser.displayName.split(' ')[0] : 'Traveler',
+          lastName: fbUser.displayName && fbUser.displayName.split(' ').length > 1 ? fbUser.displayName.split(' ').slice(1).join(' ') : '',
+          picture: fbUser.photoURL || '',
+          googleId: fbUser.uid,
+          credential: idToken
+        };
+      }
+
+      const response = await api.post('/auth/google', payload);
+      const userData = response.data?.data?.user || response.data?.user || response.data;
+      const token = response.data?.data?.token || response.data?.token;
+
+      if (token) localStorage.setItem('token', token);
       setUser(userData);
       localStorage.setItem('user', JSON.stringify(userData));
       toast.success(`Welcome, ${userData.firstName || userData.name || 'Traveler'}! Signed in with Google.`);
       return { success: true, user: userData };
     } catch (error) {
-      const message = error.response?.data?.message || 'Google authentication failed.';
+      console.error('Google login error:', error);
+      const message = error.response?.data?.message || error.message || 'Google authentication failed.';
       toast.error(message);
       return { success: false, error: message };
     }
   };
 
+  // Firebase Password Reset Email
+  const sendFirebasePasswordReset = async (email) => {
+    try {
+      await sendPasswordResetEmail(auth, email.trim().toLowerCase());
+      toast.success(`Password reset email sent to ${email}. Check your inbox!`);
+      return { success: true };
+    } catch (error) {
+      console.error('Firebase sendPasswordResetEmail error:', error);
+      let message = 'Failed to send password reset email.';
+      if (error.code === 'auth/user-not-found') {
+        message = 'No registered user found with this email.';
+      } else if (error.code === 'auth/invalid-email') {
+        message = 'Please provide a valid email address.';
+      }
+      toast.error(message);
+      return { success: false, error: message };
+    }
+  };
+
+  // OTP-based Password Reset functions
   const sendPasswordResetOtp = async (email) => {
     try {
       const response = await api.post('/auth/forgot-password-otp', { email });
@@ -178,6 +357,7 @@ export const AuthProvider = ({ children }) => {
     login,
     adminLogin,
     loginWithGoogle,
+    sendFirebasePasswordReset,
     sendPasswordResetOtp,
     verifyPasswordResetOtp,
     resetPasswordWithOtp,

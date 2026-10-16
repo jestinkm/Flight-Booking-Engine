@@ -12,11 +12,16 @@ const Profile = () => {
   const [activeSection, setActiveSection] = useState('PROFILE'); // PROFILE | IDENTITY | SECURITY
 
   // Profile fields
-  const [firstName, setFirstName] = useState(user?.firstName || '');
-  const [lastName, setLastName] = useState(user?.lastName || '');
-  const [email] = useState(user?.email || '');
-  const [phone, setPhone] = useState(user?.phone || '+1 (555) 234-5678');
+  const [firstName, setFirstName] = useState(user?.firstName || (user?.name ? user.name.split(' ')[0] : ''));
+  const [lastName, setLastName] = useState(user?.lastName || (user?.name && user.name.split(' ').length > 1 ? user.name.split(' ').slice(1).join(' ') : ''));
+  const [email, setEmail] = useState(user?.email || '');
+  const [phone, setPhone] = useState(user?.phone || '');
   const [savingProfile, setSavingProfile] = useState(false);
+
+  // Identity verification
+  const [idType, setIdType] = useState('PASSPORT');
+  const [idNumber, setIdNumber] = useState(user?.idNumber || '');
+  const [idStatus] = useState(user?.isVerified || user?.identityVerificationStatus === 'VERIFIED' ? 'VERIFIED' : 'VERIFIED');
 
   // Password fields
   const [currentPassword, setCurrentPassword] = useState('');
@@ -24,10 +29,16 @@ const Profile = () => {
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [updatingPassword, setUpdatingPassword] = useState(false);
 
-  // Identity verification
-  const [idType, setIdType] = useState('PASSPORT');
-  const [idNumber, setIdNumber] = useState(user?.idNumber || 'A98213401');
-  const [idStatus] = useState(user?.isVerified ? 'VERIFIED' : 'VERIFIED');
+  // Sync state whenever user changes
+  React.useEffect(() => {
+    if (user) {
+      setFirstName(user.firstName || (user.name ? user.name.split(' ')[0] : ''));
+      setLastName(user.lastName || (user.name && user.name.split(' ').length > 1 ? user.name.split(' ').slice(1).join(' ') : ''));
+      setEmail(user.email || '');
+      setPhone(user.phone || '');
+      setIdNumber(user.idNumber || '');
+    }
+  }, [user]);
 
   const handleUpdateProfile = async (e) => {
     e.preventDefault();

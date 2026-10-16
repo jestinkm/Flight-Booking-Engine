@@ -322,7 +322,7 @@ node backend/src/scripts/seedAdmins.js
 | **Super Admin**    | `superadmin@skynexa.com`     | `SuperAdmin@2026`     | Master flight catalog, visual layouts, adult/child fares, revenue analytics, audit logs |
 | **Schedule Admin** | `scheduleadmin@skynexa.com`  | `ScheduleAdmin@2026`  | Flight timetables, departures. **Pricing edits blocked (HTTP 403)**                     |
 | **Market Admin**   | `marketingadmin@skynexa.com` | `MarketingAdmin@2026` | Demand telemetry, zero-match searches, customer interaction CRM                         |
-| **Customer**       | `jestin@skynexa.com`         | `Password@123`        | Flight search, booking, seat selection, partial/full cancellations                      |
+| **Customer**       | `customer@skynexa.com`       | `Password@123`        | Flight search, booking, seat selection, partial/full cancellations                      |
 
 <div align="right"><a href="#top">⬆ back to top</a></div>
 

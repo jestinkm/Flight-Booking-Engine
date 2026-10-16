@@ -14,7 +14,8 @@ import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
 const ForgotPasswordModal = ({ isOpen, onClose, initialEmail = '', onSuccess }) => {
-  const { sendPasswordResetOtp, verifyPasswordResetOtp, resetPasswordWithOtp } = useAuth();
+  const { sendFirebasePasswordReset, sendPasswordResetOtp, verifyPasswordResetOtp, resetPasswordWithOtp } = useAuth();
+  const [resetSentViaFirebase, setResetSentViaFirebase] = useState(false);
 
   const [step, setStep] = useState(1); // 1: Email, 2: OTP, 3: New Password, 4: Done
   const [email, setEmail] = useState(initialEmail);
@@ -62,6 +63,20 @@ const ForgotPasswordModal = ({ isOpen, onClose, initialEmail = '', onSuccess }) 
     if (result.success) {
       setStep(2);
       setCountdown(600);
+    }
+  };
+
+  // Direct Firebase Password Reset Email
+  const handleFirebaseReset = async () => {
+    if (!email.trim() || !email.includes('@')) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+    setSubmitting(true);
+    const result = await sendFirebasePasswordReset(email.trim().toLowerCase());
+    setSubmitting(false);
+    if (result.success) {
+      setResetSentViaFirebase(true);
     }
   };
 
@@ -151,49 +166,89 @@ const ForgotPasswordModal = ({ isOpen, onClose, initialEmail = '', onSuccess }) 
           ></div>
         </div>
 
-        {/* Step 1: Request OTP */}
+        {/* Step 1: Request OTP or Firebase Reset */}
         {step === 1 && (
-          <form onSubmit={handleSendOtp} className="p-6 space-y-4">
-            <p className="text-xs text-slate-600 leading-relaxed font-medium">
-              Enter the email address registered with your Skynexa account. We will send you a 6-digit security OTP code to reset your password.
-            </p>
-
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-                Your Email Address
-              </label>
-              <div className="relative">
-                <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@example.com"
-                  autoFocus
-                  required
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:outline-none focus:border-skyblue focus:ring-2 focus:ring-skyblue/20"
-                />
+          <div className="p-6 space-y-4">
+            {resetSentViaFirebase ? (
+              <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200 text-center space-y-3">
+                <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto" />
+                <h4 className="text-sm font-bold text-emerald-900">Reset Email Dispatched</h4>
+                <p className="text-xs text-emerald-700">
+                  Firebase has sent a secure password reset link to <strong className="font-mono">{email}</strong>. Please check your inbox (and spam folder) to set your new password.
+                </p>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition cursor-pointer"
+                >
+                  Done
+                </button>
               </div>
-            </div>
+            ) : (
+              <form onSubmit={handleSendOtp} className="space-y-4">
+                <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                  Enter your registered email address. You can receive an instant Firebase password reset link or a 6-digit verification code.
+                </p>
 
-            <button
-              type="submit"
-              disabled={submitting || !email}
-              className="w-full py-3 bg-navy hover:bg-skyblue text-white text-xs font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
-            >
-              {submitting ? (
-                <>
-                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                  <span>Sending Verification Code...</span>
-                </>
-              ) : (
-                <>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                    Your Email Address
+                  </label>
+                  <div className="relative">
+                    <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="name@example.com"
+                      autoFocus
+                      required
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:outline-none focus:border-skyblue focus:ring-2 focus:ring-skyblue/20"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleFirebaseReset}
+                  disabled={submitting || !email}
+                  className="w-full py-3 bg-navy hover:bg-skyblue text-white text-xs font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                >
+                  {submitting ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Sending Reset Link...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="w-4 h-4 text-skyblue" />
+                      <span>Send Firebase Reset Link</span>
+                    </>
+                  )}
+                </button>
+
+                <div className="relative my-2">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-slate-200"></div>
+                  </div>
+                  <div className="relative flex justify-center text-xs">
+                    <span className="px-2 bg-white text-slate-400 font-semibold text-[10px] uppercase">
+                      Or verify with OTP
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={submitting || !email}
+                  className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                >
                   <span>Send 6-Digit OTP</span>
-                  <ArrowRight className="w-4 h-4" />
-                </>
-              )}
-            </button>
-          </form>
+                  <ArrowRight className="w-3.5 h-3.5 text-slate-500" />
+                </button>
+              </form>
+            )}
+          </div>
         )}
 
         {/* Step 2: Verify OTP */}

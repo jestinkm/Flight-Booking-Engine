@@ -477,8 +477,8 @@ All API endpoints return JSON conforming to the Skynexa standard envelope:
   ```json
   {
     "searchEventId": "670f5...",
-    "customerName": "Jestin Mathew",
-    "customerEmail": "jestin@example.com",
+    "customerName": "Skynexa Customer",
+    "customerEmail": "customer@example.com",
     "customerPhone": "+919876543210",
     "route": "CCU → TRV",
     "channel": "EMAIL",
