@@ -1,0 +1,31 @@
+{
+  "name": "skynexa-root",
+  "version": "1.0.0",
+  "description": "Skynexa Flight Booking Engine Monorepo Scripts",
+  "scripts": {
+    "install:all": "npm install --prefix backend && npm install --prefix frontend",
+    "install:backend": "npm install --prefix backend",
+    "install:frontend": "npm install --prefix frontend",
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "start:backend": "npm run start --prefix backend",
+    "build:frontend": "npm run build --prefix frontend",
+    "seed": "npm run seed --prefix backend",
+    "seed:fresh": "npm run seed:fresh --prefix backend",
+    "seed:routes": "npm run seed:routes --prefix backend",
+    "seed:full": "npm run seed:full --prefix backend",
+    "seed:master": "node backend/src/scripts/ensureMasterData.js",
+    "test": "npm test --prefix backend"
+  },
+  "keywords": [
+    "flight-booking",
+    "skynexa",
+    "mern-stack",
+    "react",
+    "nodejs",
+    "express",
+    "mongodb"
+  ],
+  "author": "Skynexa Team",
+  "license": "ISC"
+}

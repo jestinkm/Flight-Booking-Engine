@@ -1,0 +1,37 @@
+{
+  "name": "skynexa-backend",
+  "version": "1.0.0",
+  "description": "Skynexa Flight Booking Engine Backend",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "seed": "node src/scripts/seed.js",
+    "seed:routes": "node src/scripts/addRoutes.js",
+    "seed:fresh": "node src/scripts/seedAllAirportsAndFreshFlights.js",
+    "seed:admins": "node src/scripts/seedAdmins.js",
+    "seed:full": "node src/scripts/seed.js && node src/scripts/addRoutes.js",
+    "test": "node ../tests/system_verification.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "connect-mongo": "^5.1.0",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.1.5",
+    "express-session": "^1.17.3",
+    "express-validator": "^7.0.1",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.0.3",
+    "morgan": "^1.10.0",
+    "nodemailer": "^10.1.1",
+    "resend": "^2.0.0",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
