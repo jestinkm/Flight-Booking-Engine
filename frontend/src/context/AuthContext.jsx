@@ -10,7 +10,7 @@ import {
   updateProfile,
   onAuthStateChanged
 } from 'firebase/auth';
-import { auth, googleProvider } from '../firebase';
+import { auth, googleProvider, isFirebaseConfigured } from '../firebase';
 
 const AuthContext = createContext(null);
 
@@ -29,78 +29,108 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     let isMounted = true;
 
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (!isMounted) return;
-
-      if (firebaseUser) {
-        try {
-          // Check backend session
-          const response = await api.get('/auth/me');
-          const userData = response.data?.user || response.data?.data?.user || response.data;
-          if (userData && !userData.error) {
+    const checkBackendSession = async () => {
+      try {
+        const response = await api.get('/auth/me');
+        const userData = response.data?.user || response.data?.data?.user;
+        if (userData && !userData.error) {
+          if (isMounted) {
             setUser(userData);
             localStorage.setItem('user', JSON.stringify(userData));
-          } else {
-            // If backend session missing, sync with Firebase user credentials
-            const idToken = await firebaseUser.getIdToken();
-            const syncRes = await api.post('/auth/google', {
-              email: firebaseUser.email,
-              name: firebaseUser.displayName || firebaseUser.email.split('@')[0],
-              picture: firebaseUser.photoURL || '',
-              googleId: firebaseUser.uid,
-              credential: idToken
-            }).catch(() => null);
-
-            const syncedUser = syncRes?.data?.data?.user || syncRes?.data?.user || {
-              email: firebaseUser.email,
-              firstName: firebaseUser.displayName ? firebaseUser.displayName.split(' ')[0] : 'Traveler',
-              lastName: firebaseUser.displayName && firebaseUser.displayName.split(' ').length > 1 ? firebaseUser.displayName.split(' ').slice(1).join(' ') : '',
-              role: 'CUSTOMER',
-              avatar: firebaseUser.photoURL || ''
-            };
-            const jwt = syncRes?.data?.data?.token || syncRes?.data?.token;
-            if (jwt) localStorage.setItem('token', jwt);
-            setUser(syncedUser);
-            localStorage.setItem('user', JSON.stringify(syncedUser));
           }
-        } catch {
-          // Fallback to Firebase user profile if backend is unreachable
-          const fallbackUser = {
-            email: firebaseUser.email,
-            firstName: firebaseUser.displayName ? firebaseUser.displayName.split(' ')[0] : 'Traveler',
-            lastName: firebaseUser.displayName && firebaseUser.displayName.split(' ').length > 1 ? firebaseUser.displayName.split(' ').slice(1).join(' ') : '',
-            role: 'CUSTOMER',
-            avatar: firebaseUser.photoURL || ''
-          };
-          setUser(fallbackUser);
-          localStorage.setItem('user', JSON.stringify(fallbackUser));
-        } finally {
-          if (isMounted) setLoading(false);
-        }
-      } else {
-        // No Firebase user: check if there's a backend session (e.g., admin or existing JWT)
-        try {
-          const response = await api.get('/auth/me');
-          const userData = response.data?.user || response.data?.data?.user;
-          if (userData && !userData.error) {
-            setUser(userData);
-            localStorage.setItem('user', JSON.stringify(userData));
-          } else {
+        } else {
+          if (isMounted) {
             setUser(null);
             localStorage.removeItem('user');
           }
-        } catch {
+        }
+      } catch {
+        if (isMounted) {
           setUser(null);
           localStorage.removeItem('user');
-        } finally {
-          if (isMounted) setLoading(false);
         }
+      } finally {
+        if (isMounted) setLoading(false);
       }
-    });
+    };
+
+    if (!isFirebaseConfigured()) {
+      // If Firebase API key not configured yet, verify backend session directly
+      checkBackendSession();
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    let unsubscribe = () => {};
+    try {
+      unsubscribe = onAuthStateChanged(
+        auth,
+        async (firebaseUser) => {
+          if (!isMounted) return;
+
+          if (firebaseUser) {
+            try {
+              // Check backend session
+              const response = await api.get('/auth/me');
+              const userData = response.data?.user || response.data?.data?.user || response.data;
+              if (userData && !userData.error) {
+                setUser(userData);
+                localStorage.setItem('user', JSON.stringify(userData));
+              } else {
+                // If backend session missing, sync with Firebase user credentials
+                const idToken = await firebaseUser.getIdToken();
+                const syncRes = await api.post('/auth/google', {
+                  email: firebaseUser.email,
+                  name: firebaseUser.displayName || firebaseUser.email.split('@')[0],
+                  picture: firebaseUser.photoURL || '',
+                  googleId: firebaseUser.uid,
+                  credential: idToken
+                }).catch(() => null);
+
+                const syncedUser = syncRes?.data?.data?.user || syncRes?.data?.user || {
+                  email: firebaseUser.email,
+                  firstName: firebaseUser.displayName ? firebaseUser.displayName.split(' ')[0] : 'Traveler',
+                  lastName: firebaseUser.displayName && firebaseUser.displayName.split(' ').length > 1 ? firebaseUser.displayName.split(' ').slice(1).join(' ') : '',
+                  role: 'CUSTOMER',
+                  avatar: firebaseUser.photoURL || ''
+                };
+                const jwt = syncRes?.data?.data?.token || syncRes?.data?.token;
+                if (jwt) localStorage.setItem('token', jwt);
+                setUser(syncedUser);
+                localStorage.setItem('user', JSON.stringify(syncedUser));
+              }
+            } catch {
+              // Fallback to Firebase user profile if backend is unreachable
+              const fallbackUser = {
+                email: firebaseUser.email,
+                firstName: firebaseUser.displayName ? firebaseUser.displayName.split(' ')[0] : 'Traveler',
+                lastName: firebaseUser.displayName && firebaseUser.displayName.split(' ').length > 1 ? firebaseUser.displayName.split(' ').slice(1).join(' ') : '',
+                role: 'CUSTOMER',
+                avatar: firebaseUser.photoURL || ''
+              };
+              setUser(fallbackUser);
+              localStorage.setItem('user', JSON.stringify(fallbackUser));
+            } finally {
+              if (isMounted) setLoading(false);
+            }
+          } else {
+            await checkBackendSession();
+          }
+        },
+        (error) => {
+          console.warn('Firebase Auth State Notice:', error.message);
+          checkBackendSession();
+        }
+      );
+    } catch (err) {
+      console.warn('Firebase onAuthStateChanged init notice:', err.message);
+      checkBackendSession();
+    }
 
     return () => {
       isMounted = false;
-      unsubscribe();
+      if (typeof unsubscribe === 'function') unsubscribe();
     };
   }, []);
 

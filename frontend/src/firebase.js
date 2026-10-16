@@ -1,9 +1,36 @@
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getAnalytics, isSupported } from "firebase/analytics";
 
+export const getFirebaseApiKey = () => {
+  const envKey = import.meta.env.VITE_FIREBASE_API_KEY;
+  if (envKey && envKey !== "YOUR_FIREBASE_API_KEY" && envKey.trim()) {
+    return envKey.trim();
+  }
+  try {
+    const localKey = localStorage.getItem("VITE_FIREBASE_API_KEY");
+    if (localKey && localKey !== "YOUR_FIREBASE_API_KEY" && localKey.trim()) {
+      return localKey.trim();
+    }
+  } catch {}
+  return "";
+};
+
+export const isFirebaseConfigured = () => {
+  const key = getFirebaseApiKey();
+  return Boolean(key && key.startsWith("AIza"));
+};
+
+export const saveFirebaseApiKey = (key) => {
+  if (key && key.trim()) {
+    localStorage.setItem("VITE_FIREBASE_API_KEY", key.trim());
+  }
+};
+
+const resolvedApiKey = getFirebaseApiKey() || "YOUR_FIREBASE_API_KEY";
+
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "YOUR_FIREBASE_API_KEY",
+  apiKey: resolvedApiKey,
   authDomain: "login-a5f6f.firebaseapp.com",
   projectId: "login-a5f6f",
   storageBucket: "login-a5f6f.firebasestorage.app",
@@ -12,7 +39,7 @@ const firebaseConfig = {
   measurementId: "G-NZXRCWD3B5"
 };
 
-const app = initializeApp(firebaseConfig);
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
@@ -25,6 +52,6 @@ googleProvider.setCustomParameters({
 // Analytics is optional and supported only in compatible browser environments.
 export const analyticsPromise = isSupported().then((supported) =>
   supported ? getAnalytics(app) : null
-);
+).catch(() => null);
 
 export default app;
