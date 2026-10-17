@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Plane, Mail, Lock, ArrowRight, ShieldCheck, Sparkles, CheckCircle2, RefreshCw } from 'lucide-react';
+import { Plane, Mail, Lock, ArrowRight, ShieldCheck, RefreshCw } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import GoogleAuthButton from '../components/GoogleAuthButton';
 import ForgotPasswordModal from '../components/ForgotPasswordModal';
@@ -63,7 +63,7 @@ const Login = () => {
 
       {/* Header & Logo */}
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <Link to="/" className="inline-flex items-center gap-2.5 group mb-4">
+        <Link to="/" className="inline-flex items-center gap-2.5 group mb-2">
           <div className="w-12 h-12 rounded-2xl bg-navy flex items-center justify-center text-white shadow-xl shadow-navy/20 group-hover:scale-105 transition-transform duration-300">
             <Plane className="w-6 h-6 text-skyblue rotate-45 transform" />
           </div>
@@ -77,41 +77,12 @@ const Login = () => {
             </span>
           </div>
         </Link>
-
-        {/* Badge */}
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200/80 shadow-2xs text-[11px] font-bold text-slate-600 mb-2">
-          <Sparkles className="w-3.5 h-3.5 text-skyblue" />
-          <span>SaaS Passenger Portal</span>
-        </div>
-
-        <h2 className="text-2xl sm:text-3xl font-black text-navy tracking-tight">
-          Welcome back
-        </h2>
-        <p className="mt-1.5 text-xs sm:text-sm text-slate-500 max-w-sm mx-auto">
-          Sign in to manage your flight itineraries, boarding passes, and rewards.
-        </p>
       </div>
 
       {/* Centered Login Card */}
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white/95 backdrop-blur-md py-8 px-6 sm:px-10 rounded-3xl border border-slate-200/90 shadow-2xl shadow-navy/5 space-y-6 transition-all duration-300 hover:shadow-navy/10">
-          {/* 1. GOOGLE ONE-CLICK AUTHENTICATION (Primary SaaS Flow) */}
-          <div className="space-y-3">
-            <GoogleAuthButton redirectTo={from} label="Continue with Google" />
-
-            <div className="relative my-4">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-200/80"></div>
-              </div>
-              <div className="relative flex justify-center text-xs">
-                <span className="px-3 bg-white text-slate-400 font-bold uppercase tracking-wider text-[10px]">
-                  Or sign in with email
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* 2. REGULAR EMAIL / PASSWORD FORM */}
+          {/* 1. REGULAR EMAIL / PASSWORD FORM */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
@@ -201,6 +172,21 @@ const Login = () => {
               <span>⚡ Fill Demo Customer Credentials</span>
             </button>
           </form>
+
+          {/* Divider */}
+          <div className="relative my-2">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-200/80"></div>
+            </div>
+            <div className="relative flex justify-center text-xs">
+              <span className="px-3 bg-white text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                Or continue with Google
+              </span>
+            </div>
+          </div>
+
+          {/* 2. GOOGLE AUTHENTICATION BUTTON (Below) */}
+          <GoogleAuthButton redirectTo={from} label="Continue with Google" />
 
           {/* Footer Registration Link */}
           <div className="pt-4 border-t border-slate-100 text-center">

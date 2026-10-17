@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { signInWithPopup, signInWithRedirect } from 'firebase/auth';
 import { auth, googleProvider, isFirebaseConfigured, saveFirebaseApiKey } from '../firebase';
-import { KeyRound, X, ExternalLink, ArrowRight, ShieldCheck, Copy, Check, Globe, RefreshCw } from 'lucide-react';
+import { KeyRound, X, ExternalLink, ArrowRight, ShieldCheck, Copy, Check, Globe } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const GoogleAuthButton = ({ redirectTo = '/', label = 'Continue with Google' }) => {
@@ -177,20 +177,6 @@ const GoogleAuthButton = ({ redirectTo = '/', label = 'Continue with Google' }) 
           {loading ? 'Connecting...' : label}
         </span>
       </button>
-
-      {/* Redirect Alternative (For browsers where popups are blocked) */}
-      <div className="flex items-center justify-between px-1 text-[11px] text-slate-500">
-        <span>Popups blocked in Chrome?</span>
-        <button
-          type="button"
-          onClick={handleGoogleRedirectSignIn}
-          disabled={loading}
-          className="text-skyblue hover:text-navy font-bold hover:underline cursor-pointer flex items-center gap-1"
-        >
-          <RefreshCw className="w-3 h-3" />
-          <span>Sign In with Redirect</span>
-        </button>
-      </div>
 
       {/* Modal 1: Domain Authorization Required Modal */}
       {showDomainModal && (
