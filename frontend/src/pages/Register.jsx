@@ -63,7 +63,7 @@ const Register = () => {
     setSubmitting(false);
 
     if (result.success) {
-      navigate('/my-bookings');
+      navigate('/');
     }
   };
 
@@ -88,7 +88,7 @@ const Register = () => {
         <div className="bg-white py-8 px-6 sm:px-10 rounded-3xl border border-slate-200/80 shadow-xl space-y-6">
           {/* Google Sign-Up Button */}
           <div>
-            <GoogleAuthButton redirectTo="/my-bookings" label="Sign up with Google" />
+            <GoogleAuthButton redirectTo="/" label="Sign up with Google" />
             <div className="relative my-5">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-slate-200"></div>

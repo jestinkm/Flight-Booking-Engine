@@ -17,15 +17,15 @@ const Login = () => {
   const [forgotModalOpen, setForgotModalOpen] = useState(false);
   const [showEmailForm, setShowEmailForm] = useState(false);
 
-  // Default redirect target is /user/home as requested
-  const from = location.state?.from?.pathname || '/user/home';
+  // Default redirect target is Home page (/) upon successful authentication
+  const from = location.state?.from?.pathname || '/';
 
-  // Automatically redirect if already authenticated
+  // Automatically redirect to Home page if already authenticated
   useEffect(() => {
     if (!authLoading && user) {
-      navigate('/user/home', { replace: true });
+      navigate(from, { replace: true });
     }
-  }, [user, authLoading, navigate]);
+  }, [user, authLoading, navigate, from]);
 
   const validate = () => {
     const errs = {};

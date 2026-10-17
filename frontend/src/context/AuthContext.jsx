@@ -94,10 +94,12 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('user', JSON.stringify(syncedUser));
         toast.success(`Welcome, ${syncedUser.firstName || 'Traveler'}! Signed in with Google.`);
 
-        const savedRedirect = sessionStorage.getItem('auth_redirect_to');
-        if (savedRedirect && savedRedirect !== window.location.pathname) {
-          sessionStorage.removeItem('auth_redirect_to');
+        const savedRedirect = sessionStorage.getItem('auth_redirect_to') || '/';
+        sessionStorage.removeItem('auth_redirect_to');
+        if (savedRedirect !== window.location.pathname) {
           window.location.replace(savedRedirect);
+        } else if (window.location.pathname === '/login' || window.location.pathname === '/register') {
+          window.location.replace('/');
         }
       })
       .catch((err) => {
