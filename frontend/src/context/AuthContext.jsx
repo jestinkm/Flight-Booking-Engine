@@ -27,16 +27,36 @@ export const AuthProvider = ({ children }) => {
   });
   const [loading, setLoading] = useState(true);
   const isSyncingGoogle = useRef(false);
+  const isLoggingOut = useRef(false);
 
   // Maintain user login sessions across page reloads with Firebase & Backend
   useEffect(() => {
     let isMounted = true;
 
     const checkBackendSession = async () => {
+      if (isLoggingOut.current) {
+        if (isMounted) {
+          setUser(null);
+          setLoading(false);
+        }
+        return;
+      }
+
+      const token = localStorage.getItem('token');
+      if (!token) {
+        if (isMounted) {
+          setUser(null);
+          localStorage.removeItem('user');
+          setLoading(false);
+        }
+        return;
+      }
+
       try {
         const response = await api.get('/auth/me');
+        if (isLoggingOut.current) return;
         const userData = response.data?.user || response.data?.data?.user;
-        if (userData && !userData.error) {
+        if (userData && !userData.error && localStorage.getItem('token')) {
           if (isMounted) {
             setUser(userData);
             localStorage.setItem('user', JSON.stringify(userData));
@@ -45,12 +65,14 @@ export const AuthProvider = ({ children }) => {
           if (isMounted) {
             setUser(null);
             localStorage.removeItem('user');
+            localStorage.removeItem('token');
           }
         }
       } catch {
         if (isMounted) {
           setUser(null);
           localStorage.removeItem('user');
+          localStorage.removeItem('token');
         }
       } finally {
         if (isMounted) setLoading(false);
@@ -112,6 +134,11 @@ export const AuthProvider = ({ children }) => {
         auth,
         async (firebaseUser) => {
           if (!isMounted) return;
+          if (isLoggingOut.current) {
+            setUser(null);
+            setLoading(false);
+            return;
+          }
 
           if (firebaseUser) {
             if (isSyncingGoogle.current) {
@@ -316,20 +343,33 @@ export const AuthProvider = ({ children }) => {
 
   // Logout from Firebase & Backend
   const logout = async () => {
+    isLoggingOut.current = true;
+
+    // 1. Immediately wipe local auth state and storage to prevent race condition
+    setUser(null);
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    sessionStorage.removeItem('auth_redirect_to');
+
+    // 2. Sign out from Firebase
     try {
       await signOut(auth);
     } catch (fbErr) {
       console.warn('Firebase signOut error:', fbErr);
     }
 
+    // 3. Clear backend cookies/session
     try {
       await api.post('/auth/logout');
     } catch {
       // Ignore network errors on logout
     } finally {
+      // 4. Double ensure everything is clean and release logout lock
       setUser(null);
       localStorage.removeItem('user');
       localStorage.removeItem('token');
+      sessionStorage.clear();
+      isLoggingOut.current = false;
       toast.success('Logged out successfully');
     }
   };

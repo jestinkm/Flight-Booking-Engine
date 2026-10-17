@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../lib/axios';
 import {
@@ -11,11 +11,14 @@ import {
   Sparkles,
   ArrowRight,
   Clock,
-  ChevronRight
+  ChevronRight,
+  LogOut,
+  Mail
 } from 'lucide-react';
 
 const UserHome = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   const [recentBookings, setRecentBookings] = useState([]);
   const [loadingBookings, setLoadingBookings] = useState(true);
@@ -38,23 +41,76 @@ const UserHome = () => {
     fetchUserBookings();
   }, []);
 
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login', { replace: true });
+  };
+
+  const displayName = user?.firstName
+    ? `${user.firstName} ${user.lastName || ''}`.trim()
+    : user?.name || user?.email?.split('@')[0] || 'Traveler';
+
+  const avatarUrl = user?.avatar || user?.picture || user?.photoURL;
+
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-8">
-        {/* Clean Dashboard Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200">
-          <div>
-            <h1 className="text-2xl font-black text-navy tracking-tight">Passenger Dashboard</h1>
-            <p className="text-xs text-slate-500 mt-0.5">Manage your flight itineraries, bookings, and travel services</p>
+        {/* Passenger Header & Quick Actions Bar */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5 p-6 bg-white rounded-3xl border border-slate-200/80 shadow-xs">
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt={displayName}
+                  className="w-16 h-16 rounded-2xl object-cover ring-2 ring-sky-100 shadow-xs bg-slate-100"
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                  }}
+                />
+              ) : (
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-skyblue to-navy flex items-center justify-center text-white text-xl font-black ring-2 ring-sky-100 shadow-xs uppercase">
+                  {displayName.charAt(0)}
+                </div>
+              )}
+              <div className="absolute -bottom-1 -right-1 bg-emerald-500 text-white p-0.5 rounded-full ring-2 ring-white" title="Verified Account">
+                <ShieldCheck className="w-3.5 h-3.5" />
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl sm:text-2xl font-black text-navy tracking-tight">
+                  Welcome back, {displayName}!
+                </h1>
+                <span className="hidden sm:inline-flex px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  Verified
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 font-mono mt-0.5 flex items-center gap-1.5">
+                <Mail className="w-3.5 h-3.5 text-slate-400" />
+                <span>{user?.email || 'Authenticated Passenger'}</span>
+              </p>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
+
+          <div className="flex items-center gap-3 self-stretch sm:self-auto justify-end">
             <Link
               to="/search"
-              className="px-4 py-2 bg-navy hover:bg-skyblue text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center gap-2"
+              className="px-4 py-2.5 bg-navy hover:bg-skyblue text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center gap-2 cursor-pointer"
             >
               <Plane className="w-3.5 h-3.5 text-skyblue" />
-              <span>Search Flights</span>
+              <span>Book a Flight</span>
             </Link>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-bold rounded-xl transition flex items-center gap-2 cursor-pointer"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Logout</span>
+            </button>
           </div>
         </div>
 

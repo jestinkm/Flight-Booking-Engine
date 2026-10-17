@@ -26,7 +26,7 @@ const Navbar = () => {
   const handleLogout = async () => {
     await logout();
     setUserDropdownOpen(false);
-    navigate('/');
+    navigate('/login', { replace: true });
   };
 
   const navLinks = [
