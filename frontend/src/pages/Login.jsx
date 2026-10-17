@@ -18,15 +18,17 @@ const Login = () => {
   const [forgotModalOpen, setForgotModalOpen] = useState(false);
   const [showEmailForm, setShowEmailForm] = useState(false);
 
-  // Default redirect target is Home page (/) upon successful authentication
-  const from = location.state?.from?.pathname || '/';
+  // Target redirect destination (defaults to / and prevents self-redirecting to /login)
+  const targetDestination = (location.state?.from?.pathname && location.state.from.pathname !== '/login')
+    ? location.state.from.pathname
+    : '/';
 
-  // Automatically redirect to Home page if already authenticated
+  // Automatically redirect to destination only if user has a verified backend session
   useEffect(() => {
-    if (!authLoading && user) {
-      navigate(from, { replace: true });
+    if (!authLoading && user && localStorage.getItem('token')) {
+      navigate(targetDestination, { replace: true });
     }
-  }, [user, authLoading, navigate, from]);
+  }, [user, authLoading, navigate, targetDestination]);
 
   const validate = () => {
     const errs = {};
@@ -52,7 +54,7 @@ const Login = () => {
     setSubmitting(false);
 
     if (result.success) {
-      navigate(from, { replace: true });
+      navigate(targetDestination, { replace: true });
     }
   };
 
@@ -196,7 +198,7 @@ const Login = () => {
           </div>
 
           {/* 2. GOOGLE AUTHENTICATION BUTTON (Below) */}
-          <GoogleAuthButton redirectTo={from} label="Continue with Google" />
+          <GoogleAuthButton redirectTo={targetDestination} label="Continue with Google" />
 
           {/* Footer Registration Link */}
           <div className="pt-4 border-t border-slate-100 text-center">

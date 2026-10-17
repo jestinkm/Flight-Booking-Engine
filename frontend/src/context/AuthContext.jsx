@@ -95,12 +95,11 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('user', JSON.stringify(syncedUser));
         toast.success(`Welcome, ${syncedUser.firstName || 'Traveler'}! Signed in with Google.`);
 
-        const savedRedirect = sessionStorage.getItem('auth_redirect_to') || '/';
+        const rawSaved = sessionStorage.getItem('auth_redirect_to');
         sessionStorage.removeItem('auth_redirect_to');
-        if (savedRedirect !== window.location.pathname) {
-          window.location.replace(savedRedirect);
-        } else if (window.location.pathname === '/login' || window.location.pathname === '/register') {
-          window.location.replace('/');
+        const target = (rawSaved && rawSaved !== '/login' && rawSaved !== '/register') ? rawSaved : '/';
+        if (window.location.pathname === '/login' || window.location.pathname === '/register') {
+          window.location.replace(target);
         }
       })
       .catch((err) => {
@@ -121,14 +120,18 @@ export const AuthProvider = ({ children }) => {
             }
 
             try {
-              // Check backend session
+              // 1. Verify backend session
               const response = await api.get('/auth/me');
               const userData = response.data?.user || response.data?.data?.user || response.data;
-              if (userData && !userData.error) {
+              if (userData && !userData.error && localStorage.getItem('token')) {
                 setUser(userData);
                 localStorage.setItem('user', JSON.stringify(userData));
-              } else if (!isSyncingGoogle.current) {
-                // If backend session missing, sync with Firebase user credentials
+              } else {
+                throw new Error('Backend token missing or invalid');
+              }
+            } catch {
+              // 2. If backend session missing, exchange Firebase token with backend to establish JWT session
+              try {
                 isSyncingGoogle.current = true;
                 const idToken = await firebaseUser.getIdToken();
                 const extractedEmail = firebaseUser.email || firebaseUser.providerData?.[0]?.email || `google_${firebaseUser.uid.replace(/[^a-zA-Z0-9]/g, '').slice(0, 15)}@gmail.com`;
@@ -140,33 +143,28 @@ export const AuthProvider = ({ children }) => {
                   picture: firebaseUser.photoURL || firebaseUser.providerData?.[0]?.photoURL || '',
                   googleId: firebaseUser.uid,
                   credential: idToken
-                }).catch(() => null);
+                });
 
-                const syncedUser = syncRes?.data?.data?.user || syncRes?.data?.user || {
-                  email: extractedEmail,
-                  firstName: extractedName.split(' ')[0] || 'Traveler',
-                  lastName: extractedName.split(' ').length > 1 ? extractedName.split(' ').slice(1).join(' ') : '',
-                  role: 'CUSTOMER',
-                  avatar: firebaseUser.photoURL || ''
-                };
+                const syncedUser = syncRes?.data?.data?.user || syncRes?.data?.user;
                 const jwt = syncRes?.data?.data?.token || syncRes?.data?.token;
-                if (jwt) localStorage.setItem('token', jwt);
-                setUser(syncedUser);
-                localStorage.setItem('user', JSON.stringify(syncedUser));
+                if (jwt && syncedUser) {
+                  localStorage.setItem('token', jwt);
+                  setUser(syncedUser);
+                  localStorage.setItem('user', JSON.stringify(syncedUser));
+                } else {
+                  setUser(null);
+                  localStorage.removeItem('user');
+                  localStorage.removeItem('token');
+                }
+              } catch (syncErr) {
+                console.warn('Firebase backend sync notice:', syncErr.message);
+                setUser(null);
+                localStorage.removeItem('user');
+                localStorage.removeItem('token');
+              } finally {
+                isSyncingGoogle.current = false;
               }
-            } catch (err) {
-              // Fallback to Firebase user profile if backend is unreachable or rate limited
-              const fallbackUser = {
-                email: firebaseUser.email,
-                firstName: firebaseUser.displayName ? firebaseUser.displayName.split(' ')[0] : 'Traveler',
-                lastName: firebaseUser.displayName && firebaseUser.displayName.split(' ').length > 1 ? firebaseUser.displayName.split(' ').slice(1).join(' ') : '',
-                role: 'CUSTOMER',
-                avatar: firebaseUser.photoURL || ''
-              };
-              setUser(fallbackUser);
-              localStorage.setItem('user', JSON.stringify(fallbackUser));
             } finally {
-              isSyncingGoogle.current = false;
               if (isMounted) setLoading(false);
             }
           } else {

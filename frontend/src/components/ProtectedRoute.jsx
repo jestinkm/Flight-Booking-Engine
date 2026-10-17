@@ -11,7 +11,8 @@ const ProtectedRoute = ({ children }) => {
     return <LoadingSpinner message="Checking authentication..." className="min-h-[50vh]" />;
   }
 
-  if (!user) {
+  const token = localStorage.getItem('token');
+  if (!user || !token) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

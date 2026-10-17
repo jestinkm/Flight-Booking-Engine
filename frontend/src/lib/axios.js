@@ -26,18 +26,9 @@ api.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err.response?.status === 401) {
-      const currentPath = window.location.pathname;
-      if (
-        !currentPath.includes('/login') &&
-        !currentPath.includes('/admin-login') &&
-        !currentPath.includes('/register')
-      ) {
-        localStorage.removeItem('user');
+      // Clear invalid/expired token from storage without triggering infinite reload loops
+      if (localStorage.getItem('token')) {
         localStorage.removeItem('token');
-        // Do not force reload if checking auth session on initial load
-        if (!err.config?.url?.includes('/auth/me')) {
-          window.location.href = '/login';
-        }
       }
     }
     return Promise.reject(err);
