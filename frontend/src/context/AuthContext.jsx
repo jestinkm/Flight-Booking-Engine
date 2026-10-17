@@ -70,18 +70,21 @@ export const AuthProvider = ({ children }) => {
         if (!isMounted || !result || !result.user) return;
         const fbUser = result.user;
         const idToken = await fbUser.getIdToken();
+        const extractedEmail = fbUser.email || fbUser.providerData?.[0]?.email || `google_${fbUser.uid.replace(/[^a-zA-Z0-9]/g, '').slice(0, 15)}@gmail.com`;
+        const extractedName = fbUser.displayName || fbUser.providerData?.[0]?.displayName || extractedEmail.split('@')[0];
+
         const syncRes = await api.post('/auth/google', {
-          email: fbUser.email,
-          name: fbUser.displayName || fbUser.email.split('@')[0],
-          picture: fbUser.photoURL || '',
+          email: extractedEmail,
+          name: extractedName,
+          picture: fbUser.photoURL || fbUser.providerData?.[0]?.photoURL || '',
           googleId: fbUser.uid,
           credential: idToken
         }).catch(() => null);
 
         const syncedUser = syncRes?.data?.data?.user || syncRes?.data?.user || {
-          email: fbUser.email,
-          firstName: fbUser.displayName ? fbUser.displayName.split(' ')[0] : 'Traveler',
-          lastName: fbUser.displayName && fbUser.displayName.split(' ').length > 1 ? fbUser.displayName.split(' ').slice(1).join(' ') : '',
+          email: extractedEmail,
+          firstName: extractedName.split(' ')[0] || 'Traveler',
+          lastName: extractedName.split(' ').length > 1 ? extractedName.split(' ').slice(1).join(' ') : '',
           role: 'CUSTOMER',
           avatar: fbUser.photoURL || ''
         };
@@ -119,18 +122,21 @@ export const AuthProvider = ({ children }) => {
               } else {
                 // If backend session missing, sync with Firebase user credentials
                 const idToken = await firebaseUser.getIdToken();
+                const extractedEmail = firebaseUser.email || firebaseUser.providerData?.[0]?.email || `google_${firebaseUser.uid.replace(/[^a-zA-Z0-9]/g, '').slice(0, 15)}@gmail.com`;
+                const extractedName = firebaseUser.displayName || firebaseUser.providerData?.[0]?.displayName || extractedEmail.split('@')[0];
+
                 const syncRes = await api.post('/auth/google', {
-                  email: firebaseUser.email,
-                  name: firebaseUser.displayName || firebaseUser.email.split('@')[0],
-                  picture: firebaseUser.photoURL || '',
+                  email: extractedEmail,
+                  name: extractedName,
+                  picture: firebaseUser.photoURL || firebaseUser.providerData?.[0]?.photoURL || '',
                   googleId: firebaseUser.uid,
                   credential: idToken
                 }).catch(() => null);
 
                 const syncedUser = syncRes?.data?.data?.user || syncRes?.data?.user || {
-                  email: firebaseUser.email,
-                  firstName: firebaseUser.displayName ? firebaseUser.displayName.split(' ')[0] : 'Traveler',
-                  lastName: firebaseUser.displayName && firebaseUser.displayName.split(' ').length > 1 ? firebaseUser.displayName.split(' ').slice(1).join(' ') : '',
+                  email: extractedEmail,
+                  firstName: extractedName.split(' ')[0] || 'Traveler',
+                  lastName: extractedName.split(' ').length > 1 ? extractedName.split(' ').slice(1).join(' ') : '',
                   role: 'CUSTOMER',
                   avatar: firebaseUser.photoURL || ''
                 };
@@ -326,19 +332,26 @@ export const AuthProvider = ({ children }) => {
       let payload = googleData;
 
       // If called without payload, trigger Firebase popup
-      if (!payload || !payload.email) {
+      if (!payload) {
         const result = await signInWithPopup(auth, googleProvider);
         const fbUser = result.user;
         const idToken = await fbUser.getIdToken();
+        const extractedEmail = fbUser.email || fbUser.providerData?.[0]?.email || `google_${fbUser.uid.replace(/[^a-zA-Z0-9]/g, '').slice(0, 15)}@gmail.com`;
+        const extractedName = fbUser.displayName || fbUser.providerData?.[0]?.displayName || extractedEmail.split('@')[0];
         payload = {
-          email: fbUser.email,
-          name: fbUser.displayName,
-          firstName: fbUser.displayName ? fbUser.displayName.split(' ')[0] : 'Traveler',
-          lastName: fbUser.displayName && fbUser.displayName.split(' ').length > 1 ? fbUser.displayName.split(' ').slice(1).join(' ') : '',
-          picture: fbUser.photoURL || '',
+          email: extractedEmail,
+          name: extractedName,
+          firstName: extractedName.split(' ')[0] || 'Traveler',
+          lastName: extractedName.split(' ').length > 1 ? extractedName.split(' ').slice(1).join(' ') : '',
+          picture: fbUser.photoURL || fbUser.providerData?.[0]?.photoURL || '',
           googleId: fbUser.uid,
           credential: idToken
         };
+      }
+
+      // Ensure payload.email is never empty
+      if (!payload.email && payload.googleId) {
+        payload.email = `google_${payload.googleId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 15)}@gmail.com`;
       }
 
       const response = await api.post('/auth/google', payload);

@@ -55,13 +55,15 @@ const GoogleAuthButton = ({ redirectTo = '/', label = 'Continue with Google' }) 
         setLoading(true);
         const user = result.user;
         const idToken = await user.getIdToken();
+        const extractedEmail = user.email || user.providerData?.[0]?.email || `google_${user.uid.replace(/[^a-zA-Z0-9]/g, '').slice(0, 15)}@gmail.com`;
+        const extractedName = user.displayName || user.providerData?.[0]?.displayName || extractedEmail.split('@')[0];
 
         const authResult = await loginWithGoogle({
-          email: user.email,
-          name: user.displayName,
-          firstName: user.displayName ? user.displayName.split(' ')[0] : 'Traveler',
-          lastName: user.displayName && user.displayName.split(' ').length > 1 ? user.displayName.split(' ').slice(1).join(' ') : '',
-          picture: user.photoURL,
+          email: extractedEmail,
+          name: extractedName,
+          firstName: extractedName.split(' ')[0] || 'Traveler',
+          lastName: extractedName.split(' ').length > 1 ? extractedName.split(' ').slice(1).join(' ') : '',
+          picture: user.photoURL || user.providerData?.[0]?.photoURL || '',
           googleId: user.uid,
           credential: idToken
         });

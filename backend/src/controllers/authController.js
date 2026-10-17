@@ -263,20 +263,25 @@ const googleAuth = async (req, res, next) => {
     let userGoogleId = googleId;
     let userAvatar = picture;
 
-    // Decode JWT credential from Google Identity Services if provided
+    // Decode JWT credential from Google Identity Services or Firebase if provided
     if (credential && !userEmail) {
       try {
         const payloadBase64 = credential.split('.')[1];
         const decoded = JSON.parse(Buffer.from(payloadBase64, 'base64').toString('utf8'));
-        userEmail = decoded.email;
-        userName = decoded.name;
-        userGivenName = decoded.given_name;
-        userFamilyName = decoded.family_name;
-        userGoogleId = decoded.sub;
-        userAvatar = decoded.picture;
+        userEmail = decoded.email || (decoded.firebase?.identities?.email?.[0]);
+        userName = userName || decoded.name;
+        userGivenName = userGivenName || decoded.given_name;
+        userFamilyName = userFamilyName || decoded.family_name;
+        userGoogleId = userGoogleId || decoded.sub || decoded.user_id;
+        userAvatar = userAvatar || decoded.picture;
       } catch (decodeErr) {
         console.error('Error decoding Google JWT credential:', decodeErr.message);
       }
+    }
+
+    if (!userEmail && userGoogleId) {
+      const safeId = userGoogleId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 15);
+      userEmail = `google_${safeId}@gmail.com`;
     }
 
     if (!userEmail) {

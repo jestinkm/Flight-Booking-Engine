@@ -45,6 +45,9 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
+googleProvider.addScope('email');
+googleProvider.addScope('profile');
+googleProvider.addScope('openid');
 
 // Custom parameters to ensure account selection prompt
 googleProvider.setCustomParameters({
