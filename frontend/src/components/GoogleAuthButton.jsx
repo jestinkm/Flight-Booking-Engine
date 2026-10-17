@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { signInWithPopup } from 'firebase/auth';
+import { signInWithPopup, signInWithRedirect } from 'firebase/auth';
 import { auth, googleProvider, isFirebaseConfigured, saveFirebaseApiKey } from '../firebase';
-import { KeyRound, X, ExternalLink, ArrowRight, ShieldCheck } from 'lucide-react';
+import { KeyRound, X, ExternalLink, ArrowRight, ShieldCheck, Copy, Check, Globe } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const GoogleAuthButton = ({ redirectTo = '/', label = 'Continue with Google' }) => {
@@ -11,19 +11,29 @@ const GoogleAuthButton = ({ redirectTo = '/', label = 'Continue with Google' }) 
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [showConfigModal, setShowConfigModal] = useState(false);
+  const [showDomainModal, setShowDomainModal] = useState(false);
+  const [copiedDomain, setCopiedDomain] = useState(false);
   const [inputKey, setInputKey] = useState('');
   const [customEmail, setCustomEmail] = useState('');
   const [showEmailFallback, setShowEmailFallback] = useState(false);
 
-  const startGoogleSignIn = async () => {
+  const currentDomain = window.location.hostname;
+
+  const handleCopyDomain = () => {
+    navigator.clipboard.writeText(currentDomain);
+    setCopiedDomain(true);
+    toast.success(`Copied "${currentDomain}" to clipboard!`);
+    setTimeout(() => setCopiedDomain(false), 2000);
+  };
+
+  const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
-      // 1. Sign in with Firebase Google Provider popup
+      // Direct call to ensure browser does not classify this as unprompted popup
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
       const idToken = await user.getIdToken();
 
-      // 2. Sync user with application backend & generate session
       const authResult = await loginWithGoogle({
         email: user.email,
         name: user.displayName,
@@ -36,6 +46,7 @@ const GoogleAuthButton = ({ redirectTo = '/', label = 'Continue with Google' }) 
 
       if (authResult.success) {
         setShowConfigModal(false);
+        setShowDomainModal(false);
         navigate(redirectTo, { replace: true });
       }
     } catch (error) {
@@ -45,7 +56,15 @@ const GoogleAuthButton = ({ redirectTo = '/', label = 'Continue with Google' }) 
       } else if (error.code === 'auth/cancelled-popup-request') {
         // Ignored
       } else if (error.code === 'auth/popup-blocked') {
-        toast.error('Google sign-in popup was blocked by browser. Please enable popups.');
+        // Popup was blocked by browser - automatically fallback to redirect!
+        toast('Browser blocked popup. Switching to Google redirect sign-in...', { icon: '🔄' });
+        try {
+          await signInWithRedirect(auth, googleProvider);
+        } catch (redirectErr) {
+          toast.error('Unable to open Google sign-in. Please allow popups or use email.');
+        }
+      } else if (error.code === 'auth/unauthorized-domain' || (error.message && error.message.includes('unauthorized-domain'))) {
+        setShowDomainModal(true);
       } else if (
         error.code === 'auth/api-key-not-valid' ||
         error.code === 'auth/invalid-api-key' ||
@@ -60,14 +79,6 @@ const GoogleAuthButton = ({ redirectTo = '/', label = 'Continue with Google' }) 
     }
   };
 
-  const handleButtonClick = () => {
-    if (!isFirebaseConfigured()) {
-      setShowConfigModal(true);
-      return;
-    }
-    startGoogleSignIn();
-  };
-
   const handleSaveKeyAndContinue = (e) => {
     e.preventDefault();
     const cleanKey = inputKey.trim();
@@ -79,7 +90,6 @@ const GoogleAuthButton = ({ redirectTo = '/', label = 'Continue with Google' }) 
     saveFirebaseApiKey(cleanKey);
     toast.success('Firebase API Key saved!');
     setShowConfigModal(false);
-    // Reload so Firebase initializes with the newly saved key
     window.location.reload();
   };
 
@@ -105,6 +115,7 @@ const GoogleAuthButton = ({ redirectTo = '/', label = 'Continue with Google' }) 
 
     if (authResult.success) {
       setShowConfigModal(false);
+      setShowDomainModal(false);
       navigate(redirectTo, { replace: true });
     }
   };
@@ -113,7 +124,7 @@ const GoogleAuthButton = ({ redirectTo = '/', label = 'Continue with Google' }) 
     <>
       <button
         type="button"
-        onClick={handleButtonClick}
+        onClick={handleGoogleSignIn}
         disabled={loading}
         className="w-full py-3 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-700 font-bold text-xs sm:text-sm transition flex items-center justify-center gap-3 shadow-2xs hover:shadow-sm cursor-pointer group disabled:opacity-60 disabled:cursor-not-allowed"
       >
@@ -141,11 +152,96 @@ const GoogleAuthButton = ({ redirectTo = '/', label = 'Continue with Google' }) 
         </span>
       </button>
 
-      {/* Firebase Setup or Google Email Input Modal */}
+      {/* Modal 1: Domain Authorization Required Modal */}
+      {showDomainModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl border border-slate-200 overflow-hidden relative">
+            <div className="p-6 bg-navy text-white relative">
+              <button
+                onClick={() => setShowDomainModal(false)}
+                className="absolute top-4 right-4 p-1.5 text-slate-400 hover:text-white rounded-full hover:bg-white/10 transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-300 flex items-center justify-center">
+                  <Globe className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">Authorize Domain in Firebase</h3>
+                  <p className="text-xs text-slate-300">Firebase blocked domain: {currentDomain}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Google OAuth requires all website domains to be added to Firebase's <strong>Authorized domains</strong> list.
+              </p>
+
+              {/* Current Domain Box with One-Click Copy */}
+              <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] uppercase font-bold text-slate-400">Domain to Add:</p>
+                  <p className="text-sm font-mono font-bold text-navy">{currentDomain}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCopyDomain}
+                  className="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                >
+                  {copiedDomain ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-500" />}
+                  <span>{copiedDomain ? 'Copied!' : 'Copy'}</span>
+                </button>
+              </div>
+
+              {/* Step by Step Instructions */}
+              <div className="p-3 bg-sky-50 rounded-2xl border border-sky-100 text-xs text-slate-600 space-y-2 font-medium">
+                <p className="font-bold text-navy flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-skyblue" />
+                  Add in 3 clicks (under 30 seconds):
+                </p>
+                <ol className="list-decimal list-inside space-y-1.5 text-slate-600 pl-1 text-[11px]">
+                  <li>
+                    Open{' '}
+                    <a
+                      href="https://console.firebase.google.com/project/login-a5f6f/authentication/settings"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-skyblue font-bold hover:underline inline-flex items-center gap-0.5"
+                    >
+                      Firebase Authentication Settings <ExternalLink className="w-3 h-3 inline" />
+                    </a>
+                  </li>
+                  <li>Click <strong>Authorized domains</strong> &rarr; <strong>Add domain</strong></li>
+                  <li>Paste <code>{currentDomain}</code> and click <strong>Add</strong></li>
+                </ol>
+              </div>
+
+              {/* Direct email login bypass while domain is being authorized */}
+              <div className="pt-2 text-center border-t border-slate-100 space-y-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDomainModal(false);
+                    setShowEmailFallback(true);
+                    setShowConfigModal(true);
+                  }}
+                  className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-navy text-xs font-bold rounded-xl border border-slate-200 transition cursor-pointer"
+                >
+                  ⚡ Or Sign In with Google Email Directly
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal 2: API Key Configuration or Google Email Fallback */}
       {showConfigModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
           <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl border border-slate-200 overflow-hidden relative">
-            {/* Modal Header */}
             <div className="p-6 bg-slate-900 text-white relative">
               <button
                 onClick={() => setShowConfigModal(false)}
@@ -159,31 +255,20 @@ const GoogleAuthButton = ({ redirectTo = '/', label = 'Continue with Google' }) 
                   <KeyRound className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white">Firebase Web API Key</h3>
+                  <h3 className="text-base font-bold text-white">
+                    {showEmailFallback ? 'Sign In with Google Email' : 'Firebase Configuration'}
+                  </h3>
                   <p className="text-xs text-slate-400">Project: login-a5f6f</p>
                 </div>
               </div>
             </div>
 
-            {/* Modal Content */}
             <div className="p-6 space-y-4">
               {!showEmailFallback ? (
                 <>
                   <p className="text-xs text-slate-600 leading-relaxed">
-                    To enable Google OAuth popup, please paste your <strong>Web API Key</strong> from the Firebase Console.
+                    To enable Google OAuth popup, please enter your Firebase <strong>Web API Key</strong>.
                   </p>
-
-                  <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 text-xs text-slate-600 space-y-1.5 font-medium">
-                    <p className="font-bold text-navy flex items-center gap-1.5">
-                      <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                      How to find your key:
-                    </p>
-                    <ol className="list-decimal list-inside space-y-1 text-slate-500 pl-1 text-[11px]">
-                      <li>Open <a href="https://console.firebase.google.com/project/login-a5f6f/settings/general" target="_blank" rel="noreferrer" className="text-skyblue font-bold hover:underline inline-flex items-center gap-0.5">Firebase Console <ExternalLink className="w-3 h-3 inline" /></a></li>
-                      <li>In <strong>Project Settings → General</strong>, find <strong>Web API Key</strong></li>
-                      <li>Copy the key (starts with <code>AIzaSy...</code>) and paste below</li>
-                    </ol>
-                  </div>
 
                   <form onSubmit={handleSaveKeyAndContinue} className="space-y-3">
                     <div>

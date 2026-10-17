@@ -5,6 +5,8 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signOut,
   sendPasswordResetEmail,
   updateProfile,
@@ -61,6 +63,37 @@ export const AuthProvider = ({ children }) => {
         isMounted = false;
       };
     }
+
+    // Check if user just returned from a Firebase redirect sign-in
+    getRedirectResult(auth)
+      .then(async (result) => {
+        if (!isMounted || !result || !result.user) return;
+        const fbUser = result.user;
+        const idToken = await fbUser.getIdToken();
+        const syncRes = await api.post('/auth/google', {
+          email: fbUser.email,
+          name: fbUser.displayName || fbUser.email.split('@')[0],
+          picture: fbUser.photoURL || '',
+          googleId: fbUser.uid,
+          credential: idToken
+        }).catch(() => null);
+
+        const syncedUser = syncRes?.data?.data?.user || syncRes?.data?.user || {
+          email: fbUser.email,
+          firstName: fbUser.displayName ? fbUser.displayName.split(' ')[0] : 'Traveler',
+          lastName: fbUser.displayName && fbUser.displayName.split(' ').length > 1 ? fbUser.displayName.split(' ').slice(1).join(' ') : '',
+          role: 'CUSTOMER',
+          avatar: fbUser.photoURL || ''
+        };
+        const jwt = syncRes?.data?.data?.token || syncRes?.data?.token;
+        if (jwt) localStorage.setItem('token', jwt);
+        setUser(syncedUser);
+        localStorage.setItem('user', JSON.stringify(syncedUser));
+        toast.success(`Welcome, ${syncedUser.firstName || 'Traveler'}! Signed in with Google.`);
+      })
+      .catch((err) => {
+        console.warn('Redirect auth result warning:', err.code, err.message);
+      });
 
     let unsubscribe = () => {};
     try {

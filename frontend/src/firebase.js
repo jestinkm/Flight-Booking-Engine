@@ -2,6 +2,8 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getAnalytics, isSupported } from "firebase/analytics";
 
+export const REAL_FIREBASE_API_KEY = "AIzaSyDDJtEncYZQBMlSzXZlZoPBinhKfnVRl-4";
+
 export const getFirebaseApiKey = () => {
   const envKey = import.meta.env.VITE_FIREBASE_API_KEY;
   if (envKey && envKey !== "YOUR_FIREBASE_API_KEY" && envKey.trim()) {
@@ -13,7 +15,7 @@ export const getFirebaseApiKey = () => {
       return localKey.trim();
     }
   } catch {}
-  return "";
+  return REAL_FIREBASE_API_KEY;
 };
 
 export const isFirebaseConfigured = () => {
@@ -27,7 +29,7 @@ export const saveFirebaseApiKey = (key) => {
   }
 };
 
-const resolvedApiKey = getFirebaseApiKey() || "YOUR_FIREBASE_API_KEY";
+const resolvedApiKey = getFirebaseApiKey();
 
 const firebaseConfig = {
   apiKey: resolvedApiKey,
