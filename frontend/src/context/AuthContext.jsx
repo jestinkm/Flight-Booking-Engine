@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import api from '../lib/axios';
 import toast from 'react-hot-toast';
 import {
@@ -26,6 +26,7 @@ export const AuthProvider = ({ children }) => {
     }
   });
   const [loading, setLoading] = useState(true);
+  const isSyncingGoogle = useRef(false);
 
   // Maintain user login sessions across page reloads with Firebase & Backend
   useEffect(() => {
@@ -114,6 +115,11 @@ export const AuthProvider = ({ children }) => {
           if (!isMounted) return;
 
           if (firebaseUser) {
+            if (isSyncingGoogle.current) {
+              if (isMounted) setLoading(false);
+              return;
+            }
+
             try {
               // Check backend session
               const response = await api.get('/auth/me');
@@ -121,8 +127,9 @@ export const AuthProvider = ({ children }) => {
               if (userData && !userData.error) {
                 setUser(userData);
                 localStorage.setItem('user', JSON.stringify(userData));
-              } else {
+              } else if (!isSyncingGoogle.current) {
                 // If backend session missing, sync with Firebase user credentials
+                isSyncingGoogle.current = true;
                 const idToken = await firebaseUser.getIdToken();
                 const extractedEmail = firebaseUser.email || firebaseUser.providerData?.[0]?.email || `google_${firebaseUser.uid.replace(/[^a-zA-Z0-9]/g, '').slice(0, 15)}@gmail.com`;
                 const extractedName = firebaseUser.displayName || firebaseUser.providerData?.[0]?.displayName || extractedEmail.split('@')[0];
@@ -147,8 +154,8 @@ export const AuthProvider = ({ children }) => {
                 setUser(syncedUser);
                 localStorage.setItem('user', JSON.stringify(syncedUser));
               }
-            } catch {
-              // Fallback to Firebase user profile if backend is unreachable
+            } catch (err) {
+              // Fallback to Firebase user profile if backend is unreachable or rate limited
               const fallbackUser = {
                 email: firebaseUser.email,
                 firstName: firebaseUser.displayName ? firebaseUser.displayName.split(' ')[0] : 'Traveler',
@@ -159,6 +166,7 @@ export const AuthProvider = ({ children }) => {
               setUser(fallbackUser);
               localStorage.setItem('user', JSON.stringify(fallbackUser));
             } finally {
+              isSyncingGoogle.current = false;
               if (isMounted) setLoading(false);
             }
           } else {
@@ -330,6 +338,7 @@ export const AuthProvider = ({ children }) => {
 
   // Login with Google via Firebase
   const loginWithGoogle = async (googleData) => {
+    isSyncingGoogle.current = true;
     try {
       let payload = googleData;
 
@@ -367,9 +376,16 @@ export const AuthProvider = ({ children }) => {
       return { success: true, user: userData };
     } catch (error) {
       console.error('Google login error:', error);
-      const message = error.response?.data?.message || error.message || 'Google authentication failed.';
+      let message = error.response?.data?.message || error.message || 'Google authentication failed.';
+      if (error.response?.status === 429) {
+        message = 'Server is currently receiving too many requests. Please wait a few moments and try again.';
+      }
       toast.error(message);
       return { success: false, error: message };
+    } finally {
+      setTimeout(() => {
+        isSyncingGoogle.current = false;
+      }, 1000);
     }
   };
 

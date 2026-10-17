@@ -21,6 +21,9 @@ const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 
+// Trust reverse proxies (Render, Vercel, Cloudflare) for accurate client IP resolution
+app.set('trust proxy', 1);
+
 // Security
 // Dynamic CORS handling for production (Vercel) and development
 const rawClientUrls = process.env.CLIENT_URL ? process.env.CLIENT_URL.split(',').map((u) => u.trim().replace(/\/$/, '')) : ['http://localhost:5173'];
@@ -45,9 +48,38 @@ app.use(
 
 // Rate limiting
 const isTest = process.env.NODE_ENV === 'test';
-const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: isTest ? 10000 : 500 });
+const isDev = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
+
+// General API rate limiter
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: isTest || isDev ? 50000 : 3000,
+  skip: (req) => {
+    if (req.method === 'OPTIONS') return true;
+    if (req.path === '/health' || req.originalUrl?.includes('/health')) return true;
+    return false;
+  },
+  standardHeaders: true,
+  legacyHeaders: false
+});
 app.use('/api/', limiter);
-const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: isTest ? 1000 : 100 });
+
+// Authentication limiter: protect credentials while exempting read-only /me session checks & preflights
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: isTest || isDev ? 50000 : 600,
+  skip: (req) => {
+    if (req.method === 'OPTIONS') return true;
+    if (req.path === '/me' || req.originalUrl?.includes('/auth/me')) return true;
+    return false;
+  },
+  message: {
+    success: false,
+    message: 'Too many requests from this IP. Please try again shortly.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false
+});
 app.use('/api/auth/', authLimiter);
 
 // Body parsing
