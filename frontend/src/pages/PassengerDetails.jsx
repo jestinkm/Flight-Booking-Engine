@@ -16,7 +16,7 @@ const PassengerDetails = () => {
   React.useEffect(() => {
     if (!initialFlight) {
       toast.error('Please select a flight to proceed with booking');
-      navigate('/flights', { replace: true });
+      navigate('/search', { replace: true });
       return;
     }
 

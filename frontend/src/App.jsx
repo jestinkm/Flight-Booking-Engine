@@ -92,6 +92,7 @@ function App() {
               {/* Public Routes */}
               <Route path="/" element={<Home />} />
               <Route path="/search" element={<SearchFlights />} />
+              <Route path="/flights" element={<SearchFlights />} />
               <Route path="/flights/:instanceId" element={<FlightDetails />} />
               <Route path="/offers" element={<Offers />} />
               <Route path="/login" element={<Login />} />

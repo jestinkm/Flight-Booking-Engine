@@ -123,7 +123,7 @@ const FlightDetails = () => {
             No flight instance was found with the specified reference. Please search for an active scheduled departure.
           </p>
           <button
-            onClick={() => navigate('/flights')}
+            onClick={() => navigate('/search')}
             className="w-full py-3 px-4 bg-navy text-white text-xs font-bold rounded-xl hover:bg-skyblue transition cursor-pointer"
           >
             Back to Flight Search
