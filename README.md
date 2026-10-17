@@ -6,26 +6,39 @@
 ### ✈️ Complete Flight Booking Engine
 **Production-grade, full-stack airline reservation and operations platform**
 
-<img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white&style=for-the-badge" alt="React 19">
-<img src="https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white&style=for-the-badge" alt="Vite 8">
-<img src="https://img.shields.io/badge/Node.js-18%2F20-339933?logo=nodedotjs&logoColor=white&style=for-the-badge" alt="Node.js">
-<img src="https://img.shields.io/badge/Express-4-000000?logo=express&logoColor=white&style=for-the-badge" alt="Express">
-<img src="https://img.shields.io/badge/MongoDB-Atlas-47A248?logo=mongodb&logoColor=white&style=for-the-badge" alt="MongoDB Atlas">
-<img src="https://img.shields.io/badge/Tailwind-3-06B6D4?logo=tailwindcss&logoColor=white&style=for-the-badge" alt="Tailwind CSS">
+[![Live Frontend on Vercel](https://img.shields.io/badge/Vercel-Live%20Frontend-000000?logo=vercel&logoColor=white&style=for-the-badge)](https://flight-booking-engine-five.vercel.app)
+[![Live Backend on Render](https://img.shields.io/badge/Render-Live%20API-46E3B7?logo=render&logoColor=black&style=for-the-badge)](https://flight-booking-engine.onrender.com)
+[![Firebase Authentication](https://img.shields.io/badge/Firebase-Auth-FFCA28?logo=firebase&logoColor=black&style=for-the-badge)](https://firebase.google.com/)
+[![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white&style=for-the-badge)](https://react.dev/)
+[![Vite 8](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white&style=for-the-badge)](https://vitejs.dev/)
+[![Node.js](https://img.shields.io/badge/Node.js-18%2F20-339933?logo=nodedotjs&logoColor=white&style=for-the-badge)](https://nodejs.org/)
+[![Express 4](https://img.shields.io/badge/Express-4-000000?logo=express&logoColor=white&style=for-the-badge)](https://expressjs.com/)
+[![MongoDB Atlas](https://img.shields.io/badge/MongoDB-Atlas-47A248?logo=mongodb&logoColor=white&style=for-the-badge)](https://www.mongodb.com/atlas)
+[![Tailwind CSS 3](https://img.shields.io/badge/Tailwind-3-06B6D4?logo=tailwindcss&logoColor=white&style=for-the-badge)](https://tailwindcss.com/)
+[![Tests Passing](https://img.shields.io/badge/Tests-49%2F49%20Passing%20(100%25)-brightgreen?style=for-the-badge)](docs/TESTING.md)
 
-<br><br>
+<br>
+
+> **🌐 Live Deployment Links:**
+> - **Frontend Application (Vercel):** [https://flight-booking-engine-five.vercel.app](https://flight-booking-engine-five.vercel.app)
+> - **Production API (Render):** [https://flight-booking-engine.onrender.com](https://flight-booking-engine.onrender.com)
+> - **API Health Check:** [https://flight-booking-engine.onrender.com/api/health](https://flight-booking-engine.onrender.com/api/health)
+
+<br>
 
 <table align="center" width="100%">
 <tr>
 <td align="center" width="25%"><h2>30</h2><sub><b>Airports</b></sub></td>
 <td align="center" width="25%"><h2>4</h2><sub><b>User Roles</b></sub></td>
 <td align="center" width="25%"><h2>13</h2><sub><b>Collections</b></sub></td>
-<td align="center" width="25%"><h2>49 / 49</h2><sub><b>Tests Passing</b></sub></td>
+<td align="center" width="25%"><h2>49 / 49</h2><sub><b>Tests Passing (100%)</b></sub></td>
 </tr>
 </table>
 
 <a href="#181-project-overview">Overview</a> ·
+<a href="#182-technology-stack">Tech Stack</a> ·
 <a href="#185-installation-guide">Install</a> ·
+<a href="#186-environment-variables">Env Setup</a> ·
 <a href="#188-run-locally">Run</a> ·
 <a href="#1811-rest-api-documentation">API</a> ·
 <a href="#1813-automated-testing--verification">Tests</a> ·
@@ -98,6 +111,7 @@
 - **Bundler & Dev Server**: Vite 8 (`vite` ^8.3.0)
 - **Routing**: React Router v7 (`react-router-dom` ^7.18.4)
 - **Styling**: Tailwind CSS v3 (`tailwindcss` ^3.4.19, `postcss` ^8.5.30, `autoprefixer` ^10.6.1)
+- **Authentication**: Firebase Authentication v10 (`firebase` ^10.7.1) with Google OAuth Provider (`signInWithPopup`), Backend JWT Token Exchange, and Role-Based Route Guards (`ProtectedRoute`, `AdminProtectedRoute`)
 - **Icons**: Lucide React (`lucide-react` ^1.57.0)
 - **Date Formatting**: `date-fns` ^4.4.0
 - **HTTP Client**: Axios (`axios` ^1.20.0) configured with base URLs and credential exchange
@@ -118,9 +132,7 @@
 - **ACID Support**: Multi-document transactions used for bookings, seat assignments, and cancellations
 
 <div align="right"><a href="#top">⬆ back to top</a></div>
-```javascript
-const resend = new Resend(process.env.RESEND_API_KEY);
-```
+
 <img src="assets/divider.svg" alt="" width="100%">
 
 
@@ -252,11 +264,17 @@ EMAIL_FROM=onboarding@resend.dev
 
 ### Frontend Configuration (`frontend/.env`)
 ```env
+# API Gateway Target (e.g. http://localhost:5000/api locally or https://flight-booking-engine.onrender.com/api in production)
 VITE_API_BASE_URL=http://localhost:5000/api
+
+# Firebase Web App API Key for Google OAuth Authentication
+VITE_FIREBASE_API_KEY=YOUR_FIREBASE_API_KEY
 ```
 
 > [!IMPORTANT]
-> Client environment variables must use the `VITE_` prefix. Never place MongoDB credentials or JWT private secrets in the frontend `.env`.
+> - Client environment variables must use the `VITE_` prefix. Never place MongoDB credentials or JWT private secrets in the frontend `.env`.
+> - In production on **Vercel**, configure `VITE_API_BASE_URL` to point to the live Render backend (`https://flight-booking-engine.onrender.com/api`).
+> - In production on **Render**, configure `CLIENT_URL` to `https://flight-booking-engine-five.vercel.app` to permit cross-origin cookie and credential headers.
 
 > [!WARNING]
 > Replace every `<placeholder>` with your own value, keep all `.env` files in `.gitignore`, and never commit real credentials.
@@ -592,6 +610,10 @@ For the full specification of all parameters, headers, and responses, see [docs/
 | :----- | :---------------------------------- | :--------------------- | :---------------------------------------------------------------- |
 | `POST` | `/api/auth/login`                   | Public                 | Authenticates credentials and returns JWT Bearer token            |
 | `POST` | `/api/auth/register`                | Public                 | Registers a new customer account                                  |
+| `POST` | `/api/auth/google`                  | Public                 | Authenticates Google Firebase ID token and exchanges for JWT      |
+| `POST` | `/api/auth/logout`                  | Public / Authenticated | Clears server-side authentication cookies and invalidates session |
+| `GET`  | `/api/auth/me`                      | Customer / Admin       | Returns currently authenticated profile from JWT token            |
+| `GET`  | `/api/health`                       | Public                 | Server liveness and MongoDB Atlas health check                    |
 | `GET`  | `/api/flights/search`               | Public (Optional Auth) | Searches scheduled departures from MongoDB instances              |
 | `GET`  | `/api/flights/recent-searches`      | Customer               | Retrieves the customer's deduplicated recent searches             |
 | `GET`  | `/api/flights/instance/:id/seats`   | Public                 | Returns real-time occupied vs available seat coordinates          |
@@ -627,6 +649,12 @@ For the full specification of all parameters, headers, and responses, see [docs/
 7. **Gross vs. Net Financial Distinction**:
    - **Gross Booking Value (GBV)**: Total value of all reservations booked.
    - **Net Realized Revenue**: Strictly collected payments minus refunds issued. Pending and failed payments are excluded.
+8. **Bulletproof Atomic Logout & Session Isolation**:
+   - Calling logout immediately clears client-side credentials (`user`, `token`, `sessionStorage`, `localStorage`) to prevent race conditions.
+   - An `isLoggingOut` synchronization lock prevents asynchronous Firebase `onAuthStateChanged` or background session check events from resurrecting user state.
+   - Navigates cleanly to `/login` with `{ replace: true }`, ensuring protected routes (`/user/home`, `/profile`, `/my-bookings`) remain guarded.
+9. **Password Visibility & Eye Toggle**:
+   - An interactive password visibility toggle (`Eye` / `EyeOff`) is provided across all authentication forms (Customer Login, Customer Register, and Admin Sign-in) for enhanced accessibility and input verification.
 
 <div align="right"><a href="#top">⬆ back to top</a></div>
 
