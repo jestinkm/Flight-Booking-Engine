@@ -1,28 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../lib/axios';
 import {
   User,
-  Mail,
   Plane,
   Ticket,
-  LogOut,
   ShieldCheck,
   Search,
-  Calendar,
   Sparkles,
   ArrowRight,
   Clock,
-  CheckCircle2,
-  ExternalLink,
   ChevronRight
 } from 'lucide-react';
-import toast from 'react-hot-toast';
 
 const UserHome = () => {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [recentBookings, setRecentBookings] = useState([]);
   const [loadingBookings, setLoadingBookings] = useState(true);
@@ -45,83 +38,23 @@ const UserHome = () => {
     fetchUserBookings();
   }, []);
 
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login', { replace: true });
-  };
-
-  const displayName = user?.firstName
-    ? `${user.firstName} ${user.lastName || ''}`.trim()
-    : user?.name || user?.email?.split('@')[0] || 'Traveler';
-
-  const avatarUrl = user?.avatar || user?.picture || user?.photoURL;
-
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-8">
-        {/* Top Header / Welcome Hero Banner */}
-        <div className="relative overflow-hidden rounded-3xl bg-linear-to-r from-navy via-navy to-slate-900 text-white p-6 sm:p-10 shadow-xl border border-slate-800">
-          {/* Subtle Background Glows */}
-          <div className="absolute top-0 right-0 -mr-16 -mt-16 w-80 h-80 bg-skyblue/20 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 left-1/3 -mb-20 w-60 h-60 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
-
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-            {/* User Profile Card */}
-            <div className="flex items-center gap-5">
-              <div className="relative">
-                {avatarUrl ? (
-                  <img
-                    src={avatarUrl}
-                    alt={displayName}
-                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover ring-4 ring-skyblue/30 shadow-lg bg-slate-800"
-                    referrerPolicy="no-referrer"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                    }}
-                  />
-                ) : (
-                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-tr from-skyblue to-navy flex items-center justify-center text-white text-2xl sm:text-3xl font-black ring-4 ring-skyblue/30 shadow-lg uppercase">
-                    {displayName.charAt(0)}
-                  </div>
-                )}
-                <div className="absolute -bottom-1 -right-1 bg-emerald-500 text-white p-1 rounded-full ring-2 ring-navy" title="Verified Google Account">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-skyblue/20 border border-skyblue/30 text-sky-300 text-[11px] font-bold">
-                  <Sparkles className="w-3 h-3 text-skyblue" />
-                  <span>Verified Google Passenger</span>
-                </div>
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-                  Welcome back, {displayName}!
-                </h1>
-                <p className="text-xs sm:text-sm text-slate-300 font-mono flex items-center gap-1.5">
-                  <Mail className="w-3.5 h-3.5 text-skyblue" />
-                  <span>{user?.email}</span>
-                </p>
-              </div>
-            </div>
-
-            {/* Quick Actions / Logout Button */}
-            <div className="flex items-center gap-3">
-              <Link
-                to="/search"
-                className="px-5 py-2.5 bg-skyblue hover:bg-sky-400 text-white text-xs sm:text-sm font-bold rounded-xl shadow-md transition flex items-center gap-2 group cursor-pointer"
-              >
-                <Plane className="w-4 h-4 group-hover:rotate-45 transition-transform" />
-                <span>Book a Flight</span>
-              </Link>
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="px-4 py-2.5 bg-white/10 hover:bg-rose-500/20 hover:text-rose-300 text-slate-200 text-xs sm:text-sm font-bold rounded-xl border border-white/10 transition flex items-center gap-2 cursor-pointer"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Logout</span>
-              </button>
-            </div>
+        {/* Clean Dashboard Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200">
+          <div>
+            <h1 className="text-2xl font-black text-navy tracking-tight">Passenger Dashboard</h1>
+            <p className="text-xs text-slate-500 mt-0.5">Manage your flight itineraries, bookings, and travel services</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link
+              to="/search"
+              className="px-4 py-2 bg-navy hover:bg-skyblue text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center gap-2"
+            >
+              <Plane className="w-3.5 h-3.5 text-skyblue" />
+              <span>Search Flights</span>
+            </Link>
           </div>
         </div>
 
