@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Plane, Mail, Lock, ArrowRight, ShieldCheck, Sparkles } from 'lucide-react';
+import { Plane, Mail, Lock, ArrowRight, ShieldCheck, Sparkles, CheckCircle2, RefreshCw } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import GoogleAuthButton from '../components/GoogleAuthButton';
 import ForgotPasswordModal from '../components/ForgotPasswordModal';
 
 const Login = () => {
-  const { login } = useAuth();
+  const { login, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -15,8 +15,17 @@ const Login = () => {
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [forgotModalOpen, setForgotModalOpen] = useState(false);
+  const [showEmailForm, setShowEmailForm] = useState(false);
 
-  const from = location.state?.from?.pathname || '/';
+  // Default redirect target is /user/home as requested
+  const from = location.state?.from?.pathname || '/user/home';
+
+  // Automatically redirect if already authenticated
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate('/user/home', { replace: true });
+    }
+  }, [user, authLoading, navigate]);
 
   const validate = () => {
     const errs = {};
@@ -34,6 +43,7 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (submitting) return; // Prevent repeated clicks
     if (!validate()) return;
 
     setSubmitting(true);
@@ -46,33 +56,55 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 via-sky-50/40 to-indigo-50/30 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Background Subtle Gradient Blobs */}
+      <div className="absolute top-10 left-1/2 -translate-x-1/2 -z-10 w-[600px] h-[350px] bg-linear-to-tr from-sky-200/40 via-blue-100/30 to-indigo-100/20 blur-3xl rounded-full pointer-events-none" />
+      <div className="absolute -bottom-20 -right-20 -z-10 w-80 h-80 bg-skyblue/10 blur-3xl rounded-full pointer-events-none" />
+
+      {/* Header & Logo */}
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <Link to="/" className="inline-flex items-center gap-2.5 group mb-6">
-          <div className="w-12 h-12 rounded-2xl bg-navy flex items-center justify-center text-white shadow-lg group-hover:scale-105 transition">
-            <Plane className="w-6 h-6 text-skyblue rotate-45" />
+        <Link to="/" className="inline-flex items-center gap-2.5 group mb-4">
+          <div className="w-12 h-12 rounded-2xl bg-navy flex items-center justify-center text-white shadow-xl shadow-navy/20 group-hover:scale-105 transition-transform duration-300">
+            <Plane className="w-6 h-6 text-skyblue rotate-45 transform" />
           </div>
-          <span className="text-2xl font-black text-navy tracking-tight">SKYNEXA</span>
+          <div className="text-left">
+            <div className="flex items-center gap-1">
+              <span className="text-2xl font-black text-navy tracking-tight">SKYNEXA</span>
+              <span className="w-2 h-2 rounded-full bg-skyblue"></span>
+            </div>
+            <span className="text-[10px] tracking-widest text-slate-400 font-bold uppercase block -mt-1">
+              Airlines
+            </span>
+          </div>
         </Link>
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-navy">
+
+        {/* Badge */}
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200/80 shadow-2xs text-[11px] font-bold text-slate-600 mb-2">
+          <Sparkles className="w-3.5 h-3.5 text-skyblue" />
+          <span>SaaS Passenger Portal</span>
+        </div>
+
+        <h2 className="text-2xl sm:text-3xl font-black text-navy tracking-tight">
           Welcome back
         </h2>
-        <p className="mt-2 text-xs sm:text-sm text-slate-500">
-          Sign in to access your flight bookings, boarding passes, and rewards.
+        <p className="mt-1.5 text-xs sm:text-sm text-slate-500 max-w-sm mx-auto">
+          Sign in to manage your flight itineraries, boarding passes, and rewards.
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4">
-        <div className="bg-white py-8 px-6 sm:px-10 rounded-3xl border border-slate-200/80 shadow-xl space-y-6">
-          {/* 1. GOOGLE ONE-CLICK AUTHENTICATION */}
-          <div>
+      {/* Centered Login Card */}
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white/95 backdrop-blur-md py-8 px-6 sm:px-10 rounded-3xl border border-slate-200/90 shadow-2xl shadow-navy/5 space-y-6 transition-all duration-300 hover:shadow-navy/10">
+          {/* 1. GOOGLE ONE-CLICK AUTHENTICATION (Primary SaaS Flow) */}
+          <div className="space-y-3">
             <GoogleAuthButton redirectTo={from} label="Continue with Google" />
-            <div className="relative my-5">
+
+            <div className="relative my-4">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-200"></div>
+                <div className="w-full border-t border-slate-200/80"></div>
               </div>
               <div className="relative flex justify-center text-xs">
-                <span className="px-3 bg-white text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
+                <span className="px-3 bg-white text-slate-400 font-bold uppercase tracking-wider text-[10px]">
                   Or sign in with email
                 </span>
               </div>
@@ -86,13 +118,14 @@ const Login = () => {
                 Email or Username
               </label>
               <div className="relative">
-                <Mail className="w-5 h-5 text-slate-400 absolute left-3.5 top-3" />
+                <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
                 <input
                   type="text"
                   value={identifier}
+                  disabled={submitting}
                   onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder="email@example.com or username"
-                  className={`w-full pl-11 pr-4 py-2.5 rounded-xl border text-sm font-medium focus:outline-none focus:ring-2 ${
+                  placeholder="name@example.com or username"
+                  className={`w-full pl-10 pr-4 py-2.5 rounded-xl border text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 transition ${
                     errors.identifier
                       ? 'border-rose-500 focus:ring-rose-200'
                       : 'border-slate-200 focus:border-skyblue focus:ring-skyblue/20'
@@ -118,13 +151,14 @@ const Login = () => {
                 </button>
               </div>
               <div className="relative">
-                <Lock className="w-5 h-5 text-slate-400 absolute left-3.5 top-3" />
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
                 <input
                   type="password"
                   value={password}
+                  disabled={submitting}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className={`w-full pl-11 pr-4 py-2.5 rounded-xl border text-sm font-medium focus:outline-none focus:ring-2 ${
+                  className={`w-full pl-10 pr-4 py-2.5 rounded-xl border text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 transition ${
                     errors.password
                       ? 'border-rose-500 focus:ring-rose-200'
                       : 'border-slate-200 focus:border-skyblue focus:ring-skyblue/20'
@@ -139,12 +173,22 @@ const Login = () => {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full py-3.5 bg-navy hover:bg-skyblue text-white font-extrabold rounded-xl shadow-md transition flex items-center justify-center gap-2 text-sm disabled:opacity-50 cursor-pointer"
+              className="w-full py-3.5 bg-navy hover:bg-skyblue text-white font-extrabold rounded-xl shadow-md transition flex items-center justify-center gap-2 text-xs sm:text-sm disabled:opacity-50 cursor-pointer"
             >
-              <span>{submitting ? 'Authenticating...' : 'Sign In'}</span>
-              <ArrowRight className="w-4 h-4" />
+              {submitting ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <span>Authenticating...</span>
+                </>
+              ) : (
+                <>
+                  <span>Sign In</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
             </button>
 
+            {/* Quick Demo Credentials Autofill */}
             <button
               type="button"
               onClick={() => {
@@ -152,33 +196,35 @@ const Login = () => {
                 setPassword('Customer@123');
                 setErrors({});
               }}
-              className="w-full py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer border border-slate-200"
+              className="w-full py-2 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-navy text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer border border-slate-200"
             >
               <span>⚡ Fill Demo Customer Credentials</span>
             </button>
           </form>
 
+          {/* Footer Registration Link */}
           <div className="pt-4 border-t border-slate-100 text-center">
             <p className="text-xs text-slate-500">
               Don't have an account yet?{' '}
               <Link to="/register" className="font-bold text-skyblue hover:underline">
-                Register here
+                Create an account
               </Link>
             </p>
           </div>
 
-          <div className="pt-2 text-center">
+          {/* Admin Portal Link */}
+          <div className="pt-1 text-center">
             <Link
               to="/admin-login"
               className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-navy font-semibold transition"
             >
-              <ShieldCheck className="w-3.5 h-3.5" /> Airline Staff &amp; Admin Login
+              <ShieldCheck className="w-3.5 h-3.5" /> Airline Staff &amp; Admin Console
             </Link>
           </div>
         </div>
       </div>
 
-      {/* Forgot Password with Email OTP Verification Modal */}
+      {/* Forgot Password Modal */}
       <ForgotPasswordModal
         isOpen={forgotModalOpen}
         onClose={() => setForgotModalOpen(false)}

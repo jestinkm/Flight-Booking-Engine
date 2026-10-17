@@ -134,6 +134,14 @@ const Navbar = () => {
 
                       <div className="py-1">
                         <Link
+                          to="/user/home"
+                          onClick={() => setUserDropdownOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-navy font-semibold"
+                        >
+                          <Plane className="w-4 h-4 text-skyblue" />
+                          Dashboard
+                        </Link>
+                        <Link
                           to="/profile"
                           onClick={() => setUserDropdownOpen(false)}
                           className="flex items-center gap-2.5 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-navy"

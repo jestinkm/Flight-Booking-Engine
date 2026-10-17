@@ -24,6 +24,7 @@ import Register from './pages/Register';
 import MyBookings from './pages/MyBookings';
 import BookingDetails from './pages/BookingDetails';
 import Profile from './pages/Profile';
+import UserHome from './pages/UserHome';
 import Offers from './pages/Offers';
 import Support from './pages/Support';
 import Notifications from './pages/Notifications';
@@ -119,6 +120,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <BookingSuccess />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/user/home"
+                element={
+                  <ProtectedRoute>
+                    <UserHome />
                   </ProtectedRoute>
                 }
               />
