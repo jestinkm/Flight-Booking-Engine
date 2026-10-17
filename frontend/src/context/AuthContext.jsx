@@ -342,13 +342,13 @@ export const AuthProvider = ({ children }) => {
     try {
       let payload = googleData;
 
-      // If called without payload, trigger Firebase popup
-      if (!payload) {
+      // Require genuine Firebase credential/token or trigger genuine Firebase popup
+      if (!payload || !payload.credential) {
         const result = await signInWithPopup(auth, googleProvider);
         const fbUser = result.user;
         const idToken = await fbUser.getIdToken();
-        const extractedEmail = fbUser.email || fbUser.providerData?.[0]?.email || `google_${fbUser.uid.replace(/[^a-zA-Z0-9]/g, '').slice(0, 15)}@gmail.com`;
-        const extractedName = fbUser.displayName || fbUser.providerData?.[0]?.displayName || extractedEmail.split('@')[0];
+        const extractedEmail = fbUser.email || fbUser.providerData?.[0]?.email;
+        const extractedName = fbUser.displayName || fbUser.providerData?.[0]?.displayName || extractedEmail?.split('@')[0] || 'Traveler';
         payload = {
           email: extractedEmail,
           name: extractedName,

@@ -15,8 +15,6 @@ const GoogleAuthButton = ({ redirectTo = '/', label = 'Continue with Google' }) 
   const [popupBlocked, setPopupBlocked] = useState(false);
   const [copiedDomain, setCopiedDomain] = useState(false);
   const [inputKey, setInputKey] = useState('');
-  const [customEmail, setCustomEmail] = useState('');
-  const [showEmailFallback, setShowEmailFallback] = useState(false);
 
   const currentDomain = window.location.hostname;
 
@@ -118,33 +116,6 @@ const GoogleAuthButton = ({ redirectTo = '/', label = 'Continue with Google' }) 
     window.location.reload();
   };
 
-  const handleDirectEmailSignIn = async (e) => {
-    e.preventDefault();
-    if (!customEmail.trim() || !customEmail.includes('@')) {
-      toast.error('Please enter a valid Google email address');
-      return;
-    }
-
-    setLoading(true);
-    const cleanEmail = customEmail.trim().toLowerCase();
-    const name = cleanEmail.split('@')[0];
-    const authResult = await loginWithGoogle({
-      email: cleanEmail,
-      name,
-      firstName: name,
-      lastName: '',
-      picture: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0284c7&color=fff`,
-      googleId: `goog_${Date.now()}`
-    });
-    setLoading(false);
-
-    if (authResult.success) {
-      setShowConfigModal(false);
-      setShowDomainModal(false);
-      navigate(redirectTo, { replace: true });
-    }
-  };
-
   return (
     <div className="space-y-2">
       {/* Primary Google Auth Button */}
@@ -244,27 +215,12 @@ const GoogleAuthButton = ({ redirectTo = '/', label = 'Continue with Google' }) 
                   <li>Paste <code>{currentDomain}</code> and click <strong>Add</strong></li>
                 </ol>
               </div>
-
-              {/* Direct email login bypass while domain is being authorized */}
-              <div className="pt-2 text-center border-t border-slate-100 space-y-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowDomainModal(false);
-                    setShowEmailFallback(true);
-                    setShowConfigModal(true);
-                  }}
-                  className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-navy text-xs font-bold rounded-xl border border-slate-200 transition cursor-pointer"
-                >
-                  ⚡ Or Sign In with Google Email Directly
-                </button>
-              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Modal 2: API Key Configuration or Google Email Fallback */}
+      {/* Modal 2: API Key Configuration */}
       {showConfigModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
           <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl border border-slate-200 overflow-hidden relative">
@@ -281,96 +237,42 @@ const GoogleAuthButton = ({ redirectTo = '/', label = 'Continue with Google' }) 
                   <KeyRound className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white">
-                    {showEmailFallback ? 'Sign In with Google Email' : 'Firebase Configuration'}
-                  </h3>
+                  <h3 className="text-base font-bold text-white">Firebase Configuration</h3>
                   <p className="text-xs text-slate-400">Project: login-a5f6f</p>
                 </div>
               </div>
             </div>
 
             <div className="p-6 space-y-4">
-              {!showEmailFallback ? (
-                <>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    To enable Google OAuth popup, please enter your Firebase <strong>Web API Key</strong>.
-                  </p>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                To enable Google OAuth popup, please enter your Firebase <strong>Web API Key</strong>.
+              </p>
 
-                  <form onSubmit={handleSaveKeyAndContinue} className="space-y-3">
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-                        Web API Key
-                      </label>
-                      <input
-                        type="text"
-                        value={inputKey}
-                        onChange={(e) => setInputKey(e.target.value)}
-                        placeholder="AIzaSy..."
-                        autoFocus
-                        required
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono focus:outline-none focus:border-skyblue focus:ring-2 focus:ring-skyblue/20"
-                      />
-                    </div>
+              <form onSubmit={handleSaveKeyAndContinue} className="space-y-3">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                    Web API Key
+                  </label>
+                  <input
+                    type="text"
+                    value={inputKey}
+                    onChange={(e) => setInputKey(e.target.value)}
+                    placeholder="AIzaSy..."
+                    autoFocus
+                    required
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono focus:outline-none focus:border-skyblue focus:ring-2 focus:ring-skyblue/20"
+                  />
+                </div>
 
-                    <button
-                      type="submit"
-                      disabled={!inputKey.trim()}
-                      className="w-full py-2.5 bg-navy hover:bg-skyblue text-white text-xs font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
-                    >
-                      <span>Save Key &amp; Connect Google</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </button>
-                  </form>
-
-                  <div className="pt-2 text-center border-t border-slate-100">
-                    <button
-                      type="button"
-                      onClick={() => setShowEmailFallback(true)}
-                      className="text-xs text-skyblue font-bold hover:underline cursor-pointer"
-                    >
-                      Or sign in with Google email directly
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <form onSubmit={handleDirectEmailSignIn} className="space-y-3">
-                  <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                    Enter your Google email address to sign in immediately:
-                  </p>
-
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-                      Your Google Email Address
-                    </label>
-                    <input
-                      type="email"
-                      value={customEmail}
-                      onChange={(e) => setCustomEmail(e.target.value)}
-                      placeholder="you@gmail.com"
-                      autoFocus
-                      required
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:outline-none focus:border-skyblue focus:ring-2 focus:ring-skyblue/20"
-                    />
-                  </div>
-
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setShowEmailFallback(false)}
-                      className="flex-1 py-2 text-xs text-slate-500 hover:text-navy font-bold rounded-xl border border-slate-200 cursor-pointer"
-                    >
-                      Back
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={loading || !customEmail}
-                      className="flex-1 py-2 bg-navy hover:bg-skyblue text-white text-xs font-bold rounded-xl shadow-md transition disabled:opacity-50 cursor-pointer"
-                    >
-                      {loading ? 'Signing in...' : 'Sign In'}
-                    </button>
-                  </div>
-                </form>
-              )}
+                <button
+                  type="submit"
+                  disabled={!inputKey.trim()}
+                  className="w-full py-2.5 bg-navy hover:bg-skyblue text-white text-xs font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                >
+                  <span>Save Key &amp; Connect Google</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </form>
             </div>
           </div>
         </div>
