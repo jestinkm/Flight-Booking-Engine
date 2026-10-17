@@ -347,7 +347,7 @@ export const AuthProvider = ({ children }) => {
         const result = await signInWithPopup(auth, googleProvider);
         const fbUser = result.user;
         const idToken = await fbUser.getIdToken();
-        const extractedEmail = fbUser.email || fbUser.providerData?.[0]?.email;
+        const extractedEmail = fbUser.email || fbUser.providerData?.[0]?.email || `google_${fbUser.uid.replace(/[^a-zA-Z0-9]/g, '').slice(0, 15)}@gmail.com`;
         const extractedName = fbUser.displayName || fbUser.providerData?.[0]?.displayName || extractedEmail?.split('@')[0] || 'Traveler';
         payload = {
           email: extractedEmail,
