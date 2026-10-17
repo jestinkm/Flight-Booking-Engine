@@ -3,15 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { signInWithPopup, signInWithRedirect } from 'firebase/auth';
 import { auth, googleProvider, isFirebaseConfigured, saveFirebaseApiKey } from '../firebase';
-import { KeyRound, X, ExternalLink, ArrowRight, ShieldCheck, Copy, Check, Globe } from 'lucide-react';
+import { KeyRound, X, ExternalLink, ArrowRight, ShieldCheck, Copy, Check, Globe, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const GoogleAuthButton = ({ redirectTo = '/', label = 'Continue with Google' }) => {
   const { loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [showConfigModal, setShowConfigModal] = useState(false);
   const [showDomainModal, setShowDomainModal] = useState(false);
+  const [showConfigModal, setShowConfigModal] = useState(false);
+  const [popupBlocked, setPopupBlocked] = useState(false);
   const [copiedDomain, setCopiedDomain] = useState(false);
   const [inputKey, setInputKey] = useState('');
   const [customEmail, setCustomEmail] = useState('');
@@ -26,57 +27,79 @@ const GoogleAuthButton = ({ redirectTo = '/', label = 'Continue with Google' }) 
     setTimeout(() => setCopiedDomain(false), 2000);
   };
 
-  const handleGoogleSignIn = async () => {
+  // 1. Direct Redirect Sign-In (100% immune to popup blockers)
+  const handleGoogleRedirectSignIn = async () => {
     setLoading(true);
     try {
-      // Direct call to ensure browser does not classify this as unprompted popup
-      const result = await signInWithPopup(auth, googleProvider);
-      const user = result.user;
-      const idToken = await user.getIdToken();
-
-      const authResult = await loginWithGoogle({
-        email: user.email,
-        name: user.displayName,
-        firstName: user.displayName ? user.displayName.split(' ')[0] : 'Traveler',
-        lastName: user.displayName && user.displayName.split(' ').length > 1 ? user.displayName.split(' ').slice(1).join(' ') : '',
-        picture: user.photoURL,
-        googleId: user.uid,
-        credential: idToken
-      });
-
-      if (authResult.success) {
-        setShowConfigModal(false);
-        setShowDomainModal(false);
-        navigate(redirectTo, { replace: true });
-      }
+      sessionStorage.setItem('auth_redirect_to', redirectTo);
+      toast.loading('Redirecting to Google Sign-In...', { duration: 3000 });
+      await signInWithRedirect(auth, googleProvider);
     } catch (error) {
-      console.warn('Firebase Google Sign-In status:', error.code, error.message);
-      if (error.code === 'auth/popup-closed-by-user') {
-        toast('Google sign-in popup was closed.', { icon: 'ℹ️' });
-      } else if (error.code === 'auth/cancelled-popup-request') {
-        // Ignored
-      } else if (error.code === 'auth/popup-blocked') {
-        // Popup was blocked by browser - automatically fallback to redirect!
-        toast('Browser blocked popup. Switching to Google redirect sign-in...', { icon: '🔄' });
-        try {
-          await signInWithRedirect(auth, googleProvider);
-        } catch (redirectErr) {
-          toast.error('Unable to open Google sign-in. Please allow popups or use email.');
-        }
-      } else if (error.code === 'auth/unauthorized-domain' || (error.message && error.message.includes('unauthorized-domain'))) {
+      console.warn('Google Redirect Error:', error.code, error.message);
+      if (error.code === 'auth/unauthorized-domain' || (error.message && error.message.includes('unauthorized-domain'))) {
         setShowDomainModal(true);
-      } else if (
-        error.code === 'auth/api-key-not-valid' ||
-        error.code === 'auth/invalid-api-key' ||
-        (error.message && error.message.includes('api-key-not-valid'))
-      ) {
-        setShowConfigModal(true);
       } else {
-        toast.error(error.message || 'Failed to authenticate with Google.');
+        toast.error(error.message || 'Failed to redirect to Google.');
       }
-    } finally {
       setLoading(false);
     }
+  };
+
+  // 2. Standard Popup Sign-In with instant redirect fallback
+  const handleGoogleSignIn = () => {
+    sessionStorage.setItem('auth_redirect_to', redirectTo);
+
+    // Call signInWithPopup immediately and synchronously inside the click handler
+    signInWithPopup(auth, googleProvider)
+      .then(async (result) => {
+        setLoading(true);
+        const user = result.user;
+        const idToken = await user.getIdToken();
+
+        const authResult = await loginWithGoogle({
+          email: user.email,
+          name: user.displayName,
+          firstName: user.displayName ? user.displayName.split(' ')[0] : 'Traveler',
+          lastName: user.displayName && user.displayName.split(' ').length > 1 ? user.displayName.split(' ').slice(1).join(' ') : '',
+          picture: user.photoURL,
+          googleId: user.uid,
+          credential: idToken
+        });
+
+        if (authResult.success) {
+          setShowConfigModal(false);
+          setShowDomainModal(false);
+          navigate(redirectTo, { replace: true });
+        }
+      })
+      .catch(async (error) => {
+        console.warn('Firebase Google Sign-In status:', error.code, error.message);
+        if (error.code === 'auth/popup-blocked') {
+          setPopupBlocked(true);
+          toast('Browser blocked popup. Switching to redirect login...', { icon: '🔄' });
+          // Automatically initiate redirect login so user is not stuck!
+          try {
+            await signInWithRedirect(auth, googleProvider);
+          } catch (redirectErr) {
+            console.error('Redirect fallback error:', redirectErr);
+          }
+        } else if (error.code === 'auth/unauthorized-domain' || (error.message && error.message.includes('unauthorized-domain'))) {
+          setShowDomainModal(true);
+        } else if (error.code === 'auth/popup-closed-by-user') {
+          toast('Google sign-in popup was closed.', { icon: 'ℹ️' });
+        } else if (
+          error.code === 'auth/api-key-not-valid' ||
+          error.code === 'auth/invalid-api-key' ||
+          (error.message && error.message.includes('api-key-not-valid'))
+        ) {
+          setShowConfigModal(true);
+        } else {
+          toast.error(error.message || 'Failed to authenticate with Google.');
+        }
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
   const handleSaveKeyAndContinue = (e) => {
@@ -121,7 +144,8 @@ const GoogleAuthButton = ({ redirectTo = '/', label = 'Continue with Google' }) 
   };
 
   return (
-    <>
+    <div className="space-y-2">
+      {/* Primary Google Auth Button */}
       <button
         type="button"
         onClick={handleGoogleSignIn}
@@ -148,9 +172,23 @@ const GoogleAuthButton = ({ redirectTo = '/', label = 'Continue with Google' }) 
           />
         </svg>
         <span className="text-slate-700 group-hover:text-navy">
-          {loading ? 'Connecting to Google...' : label}
+          {loading ? 'Connecting...' : label}
         </span>
       </button>
+
+      {/* Redirect Alternative (For browsers where popups are blocked) */}
+      <div className="flex items-center justify-between px-1 text-[11px] text-slate-500">
+        <span>Popups blocked in Chrome?</span>
+        <button
+          type="button"
+          onClick={handleGoogleRedirectSignIn}
+          disabled={loading}
+          className="text-skyblue hover:text-navy font-bold hover:underline cursor-pointer flex items-center gap-1"
+        >
+          <RefreshCw className="w-3 h-3" />
+          <span>Sign In with Redirect</span>
+        </button>
+      </div>
 
       {/* Modal 1: Domain Authorization Required Modal */}
       {showDomainModal && (
@@ -349,7 +387,7 @@ const GoogleAuthButton = ({ redirectTo = '/', label = 'Continue with Google' }) 
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 };
 

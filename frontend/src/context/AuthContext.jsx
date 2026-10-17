@@ -90,6 +90,12 @@ export const AuthProvider = ({ children }) => {
         setUser(syncedUser);
         localStorage.setItem('user', JSON.stringify(syncedUser));
         toast.success(`Welcome, ${syncedUser.firstName || 'Traveler'}! Signed in with Google.`);
+
+        const savedRedirect = sessionStorage.getItem('auth_redirect_to');
+        if (savedRedirect && savedRedirect !== window.location.pathname) {
+          sessionStorage.removeItem('auth_redirect_to');
+          window.location.replace(savedRedirect);
+        }
       })
       .catch((err) => {
         console.warn('Redirect auth result warning:', err.code, err.message);
