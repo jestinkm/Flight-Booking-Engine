@@ -33,19 +33,19 @@ const FlightCard = ({ flight, searchParams = {} }) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/80 hover:border-skyblue/60 shadow-xs hover:shadow-md transition-all p-5 sm:p-6 group">
+    <div className="bg-white rounded-2xl border border-slate-200/80 hover:border-skyblue/60 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 p-5 sm:p-6 group">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         {/* Left: Airline & Route Info */}
         <div className="flex-1 space-y-4">
           {/* Header row */}
           <div className="flex items-center justify-between sm:justify-start gap-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-navy/5 flex items-center justify-center text-navy font-bold text-xs">
-                <Plane className="w-4 h-4 text-skyblue" />
+              <div className="w-9 h-9 rounded-xl bg-navy/5 flex items-center justify-center text-navy font-bold text-xs group-hover:bg-skyblue/15 group-hover:scale-110 transition-all duration-300">
+                <Plane className="w-4 h-4 text-skyblue transition-transform duration-300 group-hover:-rotate-12" />
               </div>
               <div>
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="font-bold text-navy text-sm">{airline}</span>
+                  <span className="font-bold text-navy text-sm group-hover:text-skyblue transition-colors duration-300">{airline}</span>
                   {flightName && (
                     <span className="text-xs font-semibold text-slate-500">({flightName})</span>
                   )}
@@ -53,7 +53,7 @@ const FlightCard = ({ flight, searchParams = {} }) => {
                 <span className="text-xs text-slate-400 font-mono">{flightNumber}</span>
               </div>
             </div>
-            <span className="text-[11px] font-semibold text-slate-400 bg-slate-100 px-2.5 py-0.5 rounded-full">
+            <span className="text-[11px] font-semibold text-slate-400 bg-slate-100 px-2.5 py-0.5 rounded-full transition-colors group-hover:bg-sky-50 group-hover:text-skyblue">
               {aircraft}
             </span>
           </div>
@@ -67,16 +67,16 @@ const FlightCard = ({ flight, searchParams = {} }) => {
               <p className="text-xs text-slate-400 truncate">{originCity}</p>
             </div>
 
-            {/* Flight Path Graphic */}
+            {/* Flight Path Graphic with Hover Motion */}
             <div className="col-span-3 flex flex-col items-center justify-center">
               <span className="text-[11px] font-semibold text-slate-500 mb-1 flex items-center gap-1">
                 <Clock className="w-3 h-3 text-slate-400" />
                 {duration}
               </span>
-              <div className="w-full flex items-center gap-1">
-                <div className="h-0.5 flex-1 bg-slate-200 rounded-full"></div>
-                <Plane className="w-4 h-4 text-skyblue rotate-90 transform shrink-0" />
-                <div className="h-0.5 flex-1 bg-slate-200 rounded-full"></div>
+              <div className="w-full flex items-center gap-1.5 px-1">
+                <div className="h-0.5 flex-1 bg-gradient-to-r from-slate-200 via-sky-300 to-slate-200 rounded-full group-hover:via-skyblue transition-colors duration-300"></div>
+                <Plane className="w-4 h-4 text-skyblue rotate-90 transform shrink-0 group-hover:translate-x-2 transition-transform duration-500 ease-out" />
+                <div className="h-0.5 flex-1 bg-gradient-to-r from-slate-200 via-sky-300 to-slate-200 rounded-full group-hover:via-skyblue transition-colors duration-300"></div>
               </div>
               <span className="text-[10px] font-semibold text-emerald-600 mt-1 uppercase tracking-wide">
                 {stops === 0 ? 'Direct Non-stop' : `${stops} Stop${stops > 1 ? 's' : ''}`}
@@ -104,7 +104,7 @@ const FlightCard = ({ flight, searchParams = {} }) => {
             </span>
             <span className="ml-auto text-xs font-semibold text-slate-500">
               {availableSeats > 0 ? (
-                <span className={availableSeats < 10 ? 'text-amber-600' : 'text-slate-500'}>
+                <span className={availableSeats < 10 ? 'text-amber-600 font-bold' : 'text-slate-500'}>
                   {availableSeats} seats left
                 </span>
               ) : (
@@ -120,7 +120,7 @@ const FlightCard = ({ flight, searchParams = {} }) => {
             <p className="text-xs text-slate-400 font-medium">Starting from</p>
             <div className="flex items-baseline justify-end gap-1">
               <span className="text-sm font-bold text-slate-500">₹</span>
-              <span className="text-3xl font-extrabold text-navy">{Number(adultFare).toLocaleString('en-IN')}</span>
+              <span className="text-3xl font-extrabold text-navy group-hover:text-skyblue transition-colors duration-300">{Number(adultFare).toLocaleString('en-IN')}</span>
             </div>
             <p className="text-[11px] text-slate-400 mt-0.5">
               Child fare: ₹{Number(childFare).toLocaleString('en-IN')}
@@ -130,10 +130,10 @@ const FlightCard = ({ flight, searchParams = {} }) => {
           <button
             onClick={handleSelect}
             disabled={availableSeats <= 0}
-            className="mt-4 w-full py-3 px-4 rounded-xl font-bold text-sm bg-navy text-white hover:bg-skyblue hover:text-white transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            className="mt-4 w-full py-3 px-4 rounded-xl font-bold text-sm bg-navy text-white hover:bg-skyblue transition-all shadow-sm hover:shadow-lg hover:shadow-sky-400/25 active:scale-95 flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer duration-200"
           >
             <span>Select Flight</span>
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform duration-300" />
           </button>
         </div>
       </div>

@@ -51,13 +51,13 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="w-10 h-10 rounded-xl bg-navy flex items-center justify-center text-white shadow-md shadow-navy/20 group-hover:scale-105 transition-transform">
-              <Plane className="w-5 h-5 text-skyblue rotate-45 transform" />
+            <div className="w-10 h-10 rounded-xl bg-navy flex items-center justify-center text-white shadow-md shadow-navy/20 group-hover:scale-110 group-hover:rotate-6 group-hover:shadow-skyblue/30 transition-all duration-300">
+              <Plane className="w-5 h-5 text-skyblue rotate-45 transform group-hover:rotate-90 transition-transform duration-500" />
             </div>
             <div>
               <div className="flex items-center gap-1">
-                <span className="text-2xl font-extrabold tracking-tight text-navy">SKYNEXA</span>
-                <span className="w-2 h-2 rounded-full bg-skyblue"></span>
+                <span className="text-2xl font-extrabold tracking-tight text-navy group-hover:text-skyblue transition-colors duration-300">SKYNEXA</span>
+                <span className="w-2 h-2 rounded-full bg-skyblue animate-pulse"></span>
               </div>
               <span className="text-[10px] tracking-widest text-slate-400 font-semibold uppercase block -mt-1">
                 Airlines
@@ -121,7 +121,7 @@ const Navbar = () => {
                   </button>
 
                   {userDropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50 animate-fadeIn">
+                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 z-50 animate-scaleUp transform origin-top-right">
                       <div className="px-4 py-2.5 border-b border-slate-100">
                         <p className="text-xs text-slate-400 font-medium">Signed in as</p>
                         <p className="text-sm font-bold text-navy truncate">{user.email}</p>
@@ -136,7 +136,7 @@ const Navbar = () => {
                         <Link
                           to="/user/home"
                           onClick={() => setUserDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-navy font-semibold"
+                          className="flex items-center gap-2.5 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-navy font-semibold transition-colors duration-150"
                         >
                           <Plane className="w-4 h-4 text-skyblue" />
                           Dashboard
@@ -144,7 +144,7 @@ const Navbar = () => {
                         <Link
                           to="/profile"
                           onClick={() => setUserDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-navy"
+                          className="flex items-center gap-2.5 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-navy transition-colors duration-150"
                         >
                           <User className="w-4 h-4 text-slate-400" />
                           My Profile
@@ -152,7 +152,7 @@ const Navbar = () => {
                         <Link
                           to="/my-bookings"
                           onClick={() => setUserDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-navy"
+                          className="flex items-center gap-2.5 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-navy transition-colors duration-150"
                         >
                           <Ticket className="w-4 h-4 text-slate-400" />
                           My Bookings
@@ -161,7 +161,7 @@ const Navbar = () => {
                           <Link
                             to={getAdminPath()}
                             onClick={() => setUserDropdownOpen(false)}
-                            className="flex items-center gap-2.5 px-4 py-2 text-sm text-skyblue font-medium hover:bg-skyblue/5"
+                            className="flex items-center gap-2.5 px-4 py-2 text-sm text-skyblue font-medium hover:bg-skyblue/5 transition-colors duration-150"
                           >
                             <ShieldCheck className="w-4 h-4" />
                             Admin Console
@@ -172,7 +172,7 @@ const Navbar = () => {
                       <div className="border-t border-slate-100 pt-1">
                         <button
                           onClick={handleLogout}
-                          className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-rose-600 hover:bg-rose-50"
+                          className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 transition-colors duration-150"
                         >
                           <LogOut className="w-4 h-4" />
                           Sign Out
@@ -186,13 +186,13 @@ const Navbar = () => {
               <div className="flex items-center gap-2">
                 <Link
                   to="/login"
-                  className="px-4 py-2 text-sm font-semibold text-navy hover:text-skyblue transition"
+                  className="px-4 py-2 text-sm font-semibold text-navy hover:text-skyblue transition active:scale-95"
                 >
                   Sign In
                 </Link>
                 <Link
                   to="/register"
-                  className="px-5 py-2.5 text-sm font-semibold text-white bg-navy hover:bg-navy-800 rounded-xl shadow-sm transition hover:shadow-md"
+                  className="px-5 py-2.5 text-sm font-semibold text-white bg-navy hover:bg-navy-800 rounded-xl shadow-sm transition hover:shadow-lg hover:-translate-y-0.5 active:scale-95 duration-200"
                 >
                   Create Account
                 </Link>

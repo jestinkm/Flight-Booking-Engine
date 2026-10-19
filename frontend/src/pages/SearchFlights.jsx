@@ -126,7 +126,7 @@ const SearchFlights = () => {
     <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Search Bar Modifier Card */}
-        <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs">
+        <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs card-hover hover:border-sky-300 transition-all duration-300 animate-fadeInDown">
           <SearchForm
             initialValues={{ origin, destination, date, adults, children }}
             compact
@@ -135,11 +135,11 @@ const SearchFlights = () => {
 
         {/* Recently Searched Flights */}
         {recentSearches && recentSearches.length > 0 && (
-          <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs">
+          <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs card-hover hover:border-sky-200 transition-all duration-300 animate-fadeInUp delay-100">
             <div className="flex items-center justify-between mb-3.5">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-lg bg-sky-50 text-skyblue flex items-center justify-center">
-                  <Clock className="w-4 h-4" />
+                  <Clock className="w-4 h-4 animate-spin-slow" />
                 </div>
                 <div>
                   <h3 className="text-xs font-black text-navy uppercase tracking-wider">Recently Searched Flights</h3>
@@ -155,15 +155,15 @@ const SearchFlights = () => {
               {recentSearches.slice(0, 3).map((item, idx) => (
                 <div
                   key={item.id || idx}
-                  className="p-3.5 rounded-2xl border border-slate-100 hover:border-skyblue/60 bg-slate-50/80 hover:bg-white transition flex flex-col justify-between gap-3 shadow-2xs group"
+                  className="p-3.5 rounded-2xl border border-slate-100 hover:border-skyblue/60 bg-slate-50/80 hover:bg-white card-hover transition-all duration-300 flex flex-col justify-between gap-3 shadow-2xs group"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono font-black text-navy text-sm">{item.origin}</span>
-                      <span className="text-skyblue font-bold text-xs">➔</span>
-                      <span className="font-mono font-black text-navy text-sm">{item.destination}</span>
+                      <span className="font-mono font-black text-navy text-sm group-hover:text-skyblue transition-colors">{item.origin}</span>
+                      <span className="text-skyblue font-bold text-xs group-hover:translate-x-0.5 transition-transform">➔</span>
+                      <span className="font-mono font-black text-navy text-sm group-hover:text-skyblue transition-colors">{item.destination}</span>
                     </div>
-                    <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">
+                    <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 shadow-2xs">
                       {(item.adults || 1) + (item.children || 0)} Pax
                     </span>
                   </div>
@@ -188,7 +188,7 @@ const SearchFlights = () => {
                       });
                       navigate(`/search?${params.toString()}`);
                     }}
-                    className="w-full py-2 px-3 bg-navy hover:bg-skyblue text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-[0.98]"
+                    className="w-full py-2 px-3 bg-navy hover:bg-skyblue text-white text-xs font-bold rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer shadow-xs hover:scale-[1.02] active:scale-95"
                   >
                     <Search className="w-3.5 h-3.5" />
                     <span>Search Again</span>
@@ -200,7 +200,7 @@ const SearchFlights = () => {
         )}
 
         {/* Results Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/70 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/70 shadow-xs card-hover animate-fadeInUp delay-200 transition-all duration-300">
           <div>
             <h1 className="text-xl font-extrabold text-navy">
               Flights from <span className="text-skyblue">{origin}</span> to{' '}
@@ -218,7 +218,7 @@ const SearchFlights = () => {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-navy focus:outline-none focus:border-skyblue cursor-pointer"
+              className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-navy focus:outline-none focus:border-skyblue cursor-pointer hover:border-skyblue transition-colors"
             >
               <option value="PRICE_ASC">Lowest Fare (₹)</option>
               <option value="PRICE_DESC">Highest Fare (₹)</option>
@@ -232,7 +232,7 @@ const SearchFlights = () => {
         {/* Main Grid: Sidebar Filters + Flight List */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
           {/* Filter Sidebar */}
-          <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-6">
+          <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs card-hover hover:border-sky-200 transition-all duration-300 space-y-6 animate-fadeInUp delay-300">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <span className="text-sm font-bold text-navy flex items-center gap-1.5">
                 <SlidersHorizontal className="w-4 h-4 text-skyblue" /> Filters

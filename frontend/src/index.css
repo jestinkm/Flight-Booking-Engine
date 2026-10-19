@@ -154,3 +154,140 @@ body {
   animation-play-state: paused;
 }
 
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(1.5deg);
+  }
+}
+
+@keyframes floatReverse {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(10px) rotate(-1.5deg);
+  }
+}
+
+@keyframes pulseSubtle {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.04);
+    opacity: 0.9;
+  }
+}
+
+@keyframes planeGlide {
+  0%, 100% {
+    transform: translateX(-12px) translateY(2px) rotate(0deg);
+  }
+  50% {
+    transform: translateX(12px) translateY(-2px) rotate(2deg);
+  }
+}
+
+@keyframes glowBeacon {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+}
+
+.animate-fadeInUp {
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fadeInDown {
+  animation: fadeInDown 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-scaleUp {
+  animation: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-floatSlow {
+  animation: floatSlow 5s ease-in-out infinite;
+}
+
+.animate-floatReverse {
+  animation: floatReverse 6s ease-in-out infinite;
+}
+
+.animate-pulseSubtle {
+  animation: pulseSubtle 2.5s ease-in-out infinite;
+}
+
+.animate-planeGlide {
+  animation: planeGlide 4s ease-in-out infinite;
+}
+
+.animate-beacon {
+  animation: glowBeacon 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Luxury card hover lift */
+.card-hover {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 30px -10px rgba(11, 31, 58, 0.12);
+}
+
+/* Stagger delay helpers */
+.delay-75 { animation-delay: 75ms; }
+.delay-100 { animation-delay: 100ms; }
+.delay-150 { animation-delay: 150ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+
+

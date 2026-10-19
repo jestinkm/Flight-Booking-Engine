@@ -254,30 +254,30 @@ const Home = () => {
 
         <div className="max-w-7xl mx-auto relative z-10 text-center">
           {/* Animated Header Badge */}
-          <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-skyblue-light text-xs font-bold uppercase tracking-wider mb-6 shadow-xl shadow-black/20 animate-fadeIn">
-            <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-skyblue to-sky-300 flex items-center justify-center text-navy shadow-sm animate-floatPlane">
+          <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-skyblue-light text-xs font-bold uppercase tracking-wider mb-6 shadow-xl shadow-black/20 animate-fadeInDown hover:scale-105 transition-transform duration-300">
+            <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-skyblue to-sky-300 flex items-center justify-center text-navy shadow-sm animate-floatSlow">
               <Plane className="w-3 h-3 rotate-45 transform" />
             </div>
             <span>Skynexa Flight Booking Engine • India Corridors in ₹ INR</span>
           </div>
 
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight max-w-4xl mx-auto leading-tight">
+          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight max-w-4xl mx-auto leading-tight animate-fadeInUp">
             Smarter Flights.{' '}
             <span className="bg-gradient-to-r from-sky-400 via-sky-300 to-white bg-clip-text text-transparent drop-shadow-md">
               Simpler Journeys.
             </span>
           </h1>
 
-          <p className="mt-5 text-base sm:text-lg text-slate-300 max-w-2xl mx-auto font-normal leading-relaxed">
+          <p className="mt-5 text-base sm:text-lg text-slate-300 max-w-2xl mx-auto font-normal leading-relaxed animate-fadeInUp delay-100">
             Experience premium non-stop domestic travel across India. Automatic adjacent family seating, interactive aircraft seat selection, and zero-surcharge fares in Indian Rupees (₹).
           </p>
 
           {/* INTERACTIVE RADAR TELEMETRY HUD STRIP */}
-          <div className="mt-8 max-w-3xl mx-auto bg-black/40 backdrop-blur-xl border border-white/15 rounded-2xl p-4 shadow-2xl">
+          <div className="mt-8 max-w-3xl mx-auto bg-black/40 backdrop-blur-xl border border-white/15 hover:border-sky-400/40 rounded-2xl p-4 shadow-2xl transition-all duration-300 animate-fadeInUp delay-200">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-3">
                 <div className="relative">
-                  <div className="w-9 h-9 rounded-xl bg-skyblue/20 border border-skyblue/40 flex items-center justify-center text-sky-300">
+                  <div className="w-9 h-9 rounded-xl bg-skyblue/20 border border-skyblue/40 flex items-center justify-center text-sky-300 shadow-inner">
                     <Navigation className="w-4 h-4 animate-radarSpin text-sky-300" />
                   </div>
                   <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full animate-ping"></span>
@@ -285,7 +285,7 @@ const Home = () => {
                 <div className="text-left font-mono">
                   <div className="flex items-center gap-2">
                     <span className="text-white font-bold">{activeRadar.origin} ✈ {activeRadar.dest}</span>
-                    <span className="text-emerald-400 text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20">
+                    <span className="text-emerald-400 text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 border border-emerald-500/30 animate-pulseSubtle">
                       AIRBORNE
                     </span>
                   </div>
@@ -314,10 +314,10 @@ const Home = () => {
 
               <Link
                 to={`/search?origin=${activeRadar.origin}&destination=${activeRadar.dest}`}
-                className="px-3.5 py-1.5 rounded-xl bg-skyblue hover:bg-white hover:text-navy text-white font-bold text-xs transition flex items-center gap-1 shadow-md"
+                className="px-3.5 py-1.5 rounded-xl bg-skyblue hover:bg-white hover:text-navy text-white font-bold text-xs transition-all duration-200 flex items-center gap-1 shadow-md hover:shadow-lg active:scale-95 group"
               >
                 <span>Book Flight</span>
-                <ChevronRight className="w-3.5 h-3.5" />
+                <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
               </Link>
             </div>
 
@@ -330,10 +330,10 @@ const Home = () => {
                 <button
                   key={idx}
                   onClick={() => setActiveRadarIndex(idx)}
-                  className={`px-2.5 py-1 rounded-lg text-[10px] font-mono transition cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-mono transition-all duration-200 cursor-pointer active:scale-95 ${
                     activeRadarIndex === idx
-                      ? 'bg-skyblue text-white font-bold shadow-xs'
-                      : 'bg-white/5 text-slate-300 hover:bg-white/10'
+                      ? 'bg-skyblue text-white font-bold shadow-xs scale-105'
+                      : 'bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white'
                   }`}
                 >
                   {corridor.origin} → {corridor.dest}
@@ -345,8 +345,8 @@ const Home = () => {
       </section>
 
       {/* 3. SEARCH WIDGET (FLOATING GLASS CONTAINER) */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 -mt-24 sm:-mt-28 relative z-20">
-        <div className="bg-white rounded-3xl shadow-2xl border border-slate-200/90 p-6 sm:p-8 backdrop-blur-lg">
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 -mt-24 sm:-mt-28 relative z-20 animate-fadeInUp delay-100">
+        <div className="bg-white rounded-3xl shadow-2xl hover:shadow-sky-950/10 border border-slate-200/90 p-6 sm:p-8 backdrop-blur-lg transition-shadow duration-300">
           <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
             <div className="flex items-center gap-2">
               <span className="text-xs font-black uppercase tracking-widest text-navy">
@@ -355,7 +355,7 @@ const Home = () => {
               <span className="text-slate-300">•</span>
               <span className="text-xs text-slate-500 font-medium">Automatic Family Group Seating</span>
             </div>
-            <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+            <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 hover:scale-105 transition-transform duration-200">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
               Live Scheduled Flights
             </div>
@@ -375,10 +375,10 @@ const Home = () => {
                 {recentSearches.slice(0, 3).map((item, idx) => (
                   <div
                     key={item.id || idx}
-                    className="p-3 bg-slate-50 hover:bg-sky-50/50 rounded-2xl border border-slate-100 transition flex items-center justify-between gap-3 group"
+                    className="p-3 bg-slate-50 hover:bg-white rounded-2xl border border-slate-100 hover:border-sky-300 card-hover transition-all duration-300 flex items-center justify-between gap-3 group"
                   >
                     <div>
-                      <div className="font-mono font-black text-navy text-xs flex items-center gap-1">
+                      <div className="font-mono font-black text-navy text-xs flex items-center gap-1 group-hover:text-skyblue transition-colors">
                         {item.origin} <span className="text-skyblue text-[10px]">➔</span> {item.destination}
                       </div>
                       <span className="text-[10px] text-slate-400 font-medium">
@@ -396,7 +396,7 @@ const Home = () => {
                         });
                         navigate(`/search?${params.toString()}`);
                       }}
-                      className="px-2.5 py-1.5 bg-navy hover:bg-skyblue text-white text-[11px] font-bold rounded-xl transition flex items-center gap-1 cursor-pointer shadow-2xs"
+                      className="px-2.5 py-1.5 bg-navy hover:bg-skyblue text-white text-[11px] font-bold rounded-xl transition-all duration-200 flex items-center gap-1 cursor-pointer shadow-2xs hover:scale-105 active:scale-95"
                     >
                       <Search className="w-3 h-3" />
                       <span>Search Again</span>
@@ -411,11 +411,11 @@ const Home = () => {
 
       {/* 4. INTERACTIVE GROUP FARE & SEAT SAVINGS CALCULATOR */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 pt-16">
-        <div className="bg-gradient-to-r from-sky-50 via-white to-sky-50 rounded-3xl p-6 sm:p-8 border border-sky-100 shadow-lg">
+        <div className="bg-gradient-to-r from-sky-50 via-white to-sky-50 rounded-3xl p-6 sm:p-8 border border-sky-100 shadow-lg card-hover hover:border-sky-300 transition-all duration-300">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="space-y-1 text-left">
               <div className="inline-flex items-center gap-1.5 text-xs font-black uppercase text-skyblue tracking-wider">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                <Sparkles className="w-3.5 h-3.5 text-amber-500 animate-spin-slow" />
                 Live Group Fare &amp; Seating Estimator
               </div>
               <h3 className="text-xl sm:text-2xl font-black text-navy">
@@ -427,7 +427,7 @@ const Home = () => {
             </div>
 
             {/* Interactive Passenger Slider & Fare Metrics */}
-            <div className="w-full md:w-auto bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center gap-6">
+            <div className="w-full md:w-auto bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center gap-6 card-hover hover:border-sky-200 transition-all duration-300">
               <div className="space-y-2 w-full sm:w-48 text-left">
                 <div className="flex justify-between text-xs font-bold text-navy">
                   <span>Passengers:</span>
@@ -439,7 +439,7 @@ const Home = () => {
                   max="6"
                   value={simPassengers}
                   onChange={(e) => setSimPassengers(parseInt(e.target.value))}
-                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-skyblue"
+                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-skyblue transition-all"
                 />
                 <div className="flex justify-between text-[10px] text-slate-400 font-mono">
                   <span>1 Solo</span>
@@ -474,10 +474,10 @@ const Home = () => {
 
               <Link
                 to={`/search?origin=MAA&destination=BLR&adults=${simPassengers}`}
-                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-navy hover:bg-skyblue text-white text-xs font-bold transition flex items-center justify-center gap-1 shadow-md shrink-0 cursor-pointer"
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-navy hover:bg-skyblue text-white text-xs font-bold transition-all duration-200 flex items-center justify-center gap-1 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 shrink-0 cursor-pointer group"
               >
                 <span>Find Flights</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
           </div>
@@ -507,10 +507,10 @@ const Home = () => {
                 <button
                   key={code}
                   onClick={() => setSelectedHub(code)}
-                  className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+                  className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all duration-200 flex items-center gap-2 cursor-pointer hover:scale-105 active:scale-95 ${
                     active
-                      ? 'bg-skyblue text-white shadow-lg shadow-skyblue/30 ring-2 ring-white/30'
-                      : 'bg-white/10 text-slate-300 hover:bg-white/15'
+                      ? 'bg-skyblue text-white shadow-lg shadow-skyblue/30 ring-2 ring-white/30 scale-105'
+                      : 'bg-white/10 text-slate-300 hover:bg-white/15 hover:text-white'
                   }`}
                 >
                   <Plane className="w-3.5 h-3.5" />
@@ -525,7 +525,7 @@ const Home = () => {
             {CORRIDOR_EXPLORER_DATA[selectedHub].destinations.map((dest, idx) => (
               <div
                 key={idx}
-                className="bg-white/5 backdrop-blur-md rounded-2xl p-5 border border-white/10 hover:border-skyblue/60 hover:bg-white/10 transition-all duration-300 flex flex-col justify-between group shadow-lg"
+                className="bg-white/5 backdrop-blur-md rounded-2xl p-5 border border-white/10 hover:border-skyblue/60 hover:bg-white/10 card-hover transition-all duration-300 flex flex-col justify-between group shadow-lg"
               >
                 <div>
                   <div className="flex items-center justify-between pb-3 border-b border-white/10">
@@ -541,7 +541,7 @@ const Home = () => {
                   </h3>
                   <div className="mt-3 space-y-1.5 text-xs text-slate-300">
                     <p className="flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5 text-sky-400" /> {dest.time} flight time ({dest.dist})
+                      <Clock className="w-3.5 h-3.5 text-sky-400 group-hover:rotate-12 transition-transform" /> {dest.time} flight time ({dest.dist})
                     </p>
                     <p className="flex items-center gap-1.5">
                       <Armchair className="w-3.5 h-3.5 text-sky-400" /> {dest.aircraft}
@@ -558,10 +558,10 @@ const Home = () => {
                   </div>
                   <Link
                     to={`/search?origin=${selectedHub}&destination=${dest.code}`}
-                    className="px-3.5 py-2 rounded-xl bg-skyblue hover:bg-white hover:text-navy text-white text-xs font-bold transition flex items-center gap-1 shadow-md"
+                    className="px-3.5 py-2 rounded-xl bg-skyblue hover:bg-white hover:text-navy text-white text-xs font-bold transition-all duration-200 flex items-center gap-1 shadow-md hover:scale-105 active:scale-95 group"
                   >
                     <span>Search</span>
-                    <ChevronRight className="w-3.5 h-3.5" />
+                    <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </div>
               </div>
@@ -575,7 +575,7 @@ const Home = () => {
         <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-10">
           <div>
             <div className="flex items-center gap-2 text-skyblue text-xs font-bold uppercase tracking-wider mb-2">
-              <Globe className="w-4 h-4" /> Indian Domestic Corridors
+              <Globe className="w-4 h-4 animate-spin-slow" /> Indian Domestic Corridors
             </div>
             <h2 className="text-3xl sm:text-4xl font-black text-navy">Popular Indian Flights</h2>
           </div>
@@ -589,15 +589,15 @@ const Home = () => {
             <Link
               key={idx}
               to={`/search?origin=${route.origin}&destination=${route.dest}`}
-              className="group bg-white rounded-3xl overflow-hidden border border-slate-200/80 hover:border-skyblue shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
+              className="group bg-white rounded-3xl overflow-hidden border border-slate-200/80 hover:border-skyblue card-hover shadow-xs transition-all duration-300 flex flex-col justify-between"
             >
               <div className="h-44 overflow-hidden relative">
                 <img
                   src={route.image}
                   alt={route.destCity}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                 />
-                <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black text-navy shadow-sm">
+                <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black text-navy shadow-sm group-hover:scale-105 transition-transform">
                   {route.frequency}
                 </div>
                 <div className="absolute bottom-3 left-3 bg-navy/80 backdrop-blur-md px-2.5 py-1 rounded-lg text-white font-mono text-xs font-bold">
@@ -613,8 +613,8 @@ const Home = () => {
                       {route.originCity} to {route.destCity}
                     </h3>
                   </div>
-                  <div className="w-10 h-10 rounded-2xl bg-sky-50 text-skyblue flex items-center justify-center group-hover:bg-navy group-hover:text-white transition-all shadow-2xs">
-                    <Plane className="w-5 h-5 group-hover:rotate-45 transition-transform" />
+                  <div className="w-10 h-10 rounded-2xl bg-sky-50 text-skyblue flex items-center justify-center group-hover:bg-navy group-hover:text-white transition-all duration-300 shadow-2xs group-hover:scale-110">
+                    <Plane className="w-5 h-5 group-hover:rotate-45 transition-transform duration-300" />
                   </div>
                 </div>
 
@@ -624,7 +624,7 @@ const Home = () => {
                   </span>
                   <div className="text-right">
                     <span className="text-[10px] text-slate-400 uppercase font-semibold block">From</span>
-                    <span className="text-xl font-black text-emerald-700 font-mono">
+                    <span className="text-xl font-black text-emerald-700 font-mono group-hover:scale-105 inline-block transition-transform">
                       ₹{route.price.toLocaleString('en-IN')}
                     </span>
                   </div>
@@ -652,16 +652,16 @@ const Home = () => {
               <div className="flex gap-2 p-1.5 bg-slate-100 rounded-2xl">
                 <button
                   onClick={() => setSelectedCabin('3-3')}
-                  className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-                    selectedCabin === '3-3' ? 'bg-navy text-white shadow-md' : 'text-slate-600 hover:text-navy'
+                  className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer active:scale-95 ${
+                    selectedCabin === '3-3' ? 'bg-navy text-white shadow-md scale-[1.02]' : 'text-slate-600 hover:text-navy'
                   }`}
                 >
                   Airbus A320 (3-3 Layout)
                 </button>
                 <button
                   onClick={() => setSelectedCabin('2-2')}
-                  className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-                    selectedCabin === '2-2' ? 'bg-navy text-white shadow-md' : 'text-slate-600 hover:text-navy'
+                  className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer active:scale-95 ${
+                    selectedCabin === '2-2' ? 'bg-navy text-white shadow-md scale-[1.02]' : 'text-slate-600 hover:text-navy'
                   }`}
                 >
                   Embraer E190 (2-2 Layout)
@@ -669,8 +669,8 @@ const Home = () => {
               </div>
 
               <div className="space-y-4">
-                <div className="flex items-start gap-3.5">
-                  <div className="p-2.5 rounded-xl bg-sky-50 text-skyblue shrink-0 mt-0.5">
+                <div className="flex items-start gap-3.5 p-2 rounded-2xl hover:bg-slate-50 transition-colors">
+                  <div className="p-2.5 rounded-xl bg-sky-50 text-skyblue shrink-0 mt-0.5 shadow-2xs">
                     <Armchair className="w-5 h-5" />
                   </div>
                   <div>
@@ -683,8 +683,8 @@ const Home = () => {
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3.5">
-                  <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 shrink-0 mt-0.5">
+                <div className="flex items-start gap-3.5 p-2 rounded-2xl hover:bg-slate-50 transition-colors">
+                  <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 shrink-0 mt-0.5 shadow-2xs">
                     <Wifi className="w-5 h-5" />
                   </div>
                   <div>
@@ -695,8 +695,8 @@ const Home = () => {
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3.5">
-                  <div className="p-2.5 rounded-xl bg-amber-50 text-amber-600 shrink-0 mt-0.5">
+                <div className="flex items-start gap-3.5 p-2 rounded-2xl hover:bg-slate-50 transition-colors">
+                  <div className="p-2.5 rounded-xl bg-amber-50 text-amber-600 shrink-0 mt-0.5 shadow-2xs">
                     <Coffee className="w-5 h-5" />
                   </div>
                   <div>
@@ -728,27 +728,27 @@ const Home = () => {
                     {selectedCabin === '3-3' ? (
                       <>
                         <div className="flex gap-1">
-                          <span className="w-7 h-7 rounded bg-emerald-100 border border-emerald-300 text-emerald-800 flex items-center justify-center font-bold">A</span>
-                          <span className="w-7 h-7 rounded bg-slate-200 border border-slate-300 text-slate-600 flex items-center justify-center font-bold">B</span>
-                          <span className="w-7 h-7 rounded bg-emerald-100 border border-emerald-300 text-emerald-800 flex items-center justify-center font-bold">C</span>
+                          <span className="w-7 h-7 rounded bg-emerald-100 border border-emerald-300 text-emerald-800 flex items-center justify-center font-bold hover:scale-125 transition-transform duration-150 cursor-pointer shadow-2xs">A</span>
+                          <span className="w-7 h-7 rounded bg-slate-200 border border-slate-300 text-slate-600 flex items-center justify-center font-bold hover:scale-110 transition-transform duration-150 cursor-not-allowed">B</span>
+                          <span className="w-7 h-7 rounded bg-emerald-100 border border-emerald-300 text-emerald-800 flex items-center justify-center font-bold hover:scale-125 transition-transform duration-150 cursor-pointer shadow-2xs">C</span>
                         </div>
                         <div className="w-5 text-center text-slate-300 text-[10px]">||</div>
                         <div className="flex gap-1">
-                          <span className="w-7 h-7 rounded bg-emerald-100 border border-emerald-300 text-emerald-800 flex items-center justify-center font-bold">D</span>
-                          <span className="w-7 h-7 rounded bg-slate-200 border border-slate-300 text-slate-600 flex items-center justify-center font-bold">E</span>
-                          <span className="w-7 h-7 rounded bg-emerald-100 border border-emerald-300 text-emerald-800 flex items-center justify-center font-bold">F</span>
+                          <span className="w-7 h-7 rounded bg-emerald-100 border border-emerald-300 text-emerald-800 flex items-center justify-center font-bold hover:scale-125 transition-transform duration-150 cursor-pointer shadow-2xs">D</span>
+                          <span className="w-7 h-7 rounded bg-slate-200 border border-slate-300 text-slate-600 flex items-center justify-center font-bold hover:scale-110 transition-transform duration-150 cursor-not-allowed">E</span>
+                          <span className="w-7 h-7 rounded bg-emerald-100 border border-emerald-300 text-emerald-800 flex items-center justify-center font-bold hover:scale-125 transition-transform duration-150 cursor-pointer shadow-2xs">F</span>
                         </div>
                       </>
                     ) : (
                       <>
                         <div className="flex gap-1">
-                          <span className="w-8 h-7 rounded bg-emerald-100 border border-emerald-300 text-emerald-800 flex items-center justify-center font-bold">A</span>
-                          <span className="w-8 h-7 rounded bg-emerald-100 border border-emerald-300 text-emerald-800 flex items-center justify-center font-bold">B</span>
+                          <span className="w-8 h-7 rounded bg-emerald-100 border border-emerald-300 text-emerald-800 flex items-center justify-center font-bold hover:scale-125 transition-transform duration-150 cursor-pointer shadow-2xs">A</span>
+                          <span className="w-8 h-7 rounded bg-emerald-100 border border-emerald-300 text-emerald-800 flex items-center justify-center font-bold hover:scale-125 transition-transform duration-150 cursor-pointer shadow-2xs">B</span>
                         </div>
                         <div className="w-8 text-center text-slate-300 text-[10px]">||</div>
                         <div className="flex gap-1">
-                          <span className="w-8 h-7 rounded bg-emerald-100 border border-emerald-300 text-emerald-800 flex items-center justify-center font-bold">C</span>
-                          <span className="w-8 h-7 rounded bg-emerald-100 border border-emerald-300 text-emerald-800 flex items-center justify-center font-bold">D</span>
+                          <span className="w-8 h-7 rounded bg-emerald-100 border border-emerald-300 text-emerald-800 flex items-center justify-center font-bold hover:scale-125 transition-transform duration-150 cursor-pointer shadow-2xs">C</span>
+                          <span className="w-8 h-7 rounded bg-emerald-100 border border-emerald-300 text-emerald-800 flex items-center justify-center font-bold hover:scale-125 transition-transform duration-150 cursor-pointer shadow-2xs">D</span>
                         </div>
                       </>
                     )}
@@ -786,12 +786,12 @@ const Home = () => {
               return (
                 <div
                   key={idx}
-                  className="bg-slate-50/70 rounded-3xl p-8 border border-slate-200/70 hover:border-skyblue/50 hover:bg-white transition-all duration-300 hover:shadow-xl group"
+                  className="bg-slate-50/70 rounded-3xl p-8 border border-slate-200/70 hover:border-skyblue/50 hover:bg-white card-hover transition-all duration-300 group"
                 >
-                  <div className="w-14 h-14 rounded-2xl bg-navy text-white flex items-center justify-center mb-6 shadow-lg shadow-navy/10 group-hover:scale-105 transition-transform">
-                    <Icon className="w-7 h-7 text-skyblue" />
+                  <div className="w-14 h-14 rounded-2xl bg-navy text-white flex items-center justify-center mb-6 shadow-lg shadow-navy/10 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
+                    <Icon className="w-7 h-7 text-skyblue group-hover:text-white transition-colors" />
                   </div>
-                  <h4 className="text-xl font-bold text-navy mb-3">{feat.title}</h4>
+                  <h4 className="text-xl font-bold text-navy mb-3 group-hover:text-skyblue transition-colors">{feat.title}</h4>
                   <p className="text-slate-600 text-sm leading-relaxed">{feat.desc}</p>
                 </div>
               );
@@ -800,19 +800,19 @@ const Home = () => {
 
           {/* Quick Metrics Bar */}
           <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6 bg-gradient-to-r from-navy via-navy to-[#0b274c] rounded-3xl p-8 text-white text-center shadow-2xl">
-            <div>
+            <div className="card-hover p-2 rounded-2xl transition-all duration-300">
               <p className="text-3xl sm:text-4xl font-black text-skyblue">99.8%</p>
               <p className="text-xs text-slate-300 mt-1 uppercase font-semibold">On-Time Departures</p>
             </div>
-            <div>
+            <div className="card-hover p-2 rounded-2xl transition-all duration-300">
               <p className="text-3xl sm:text-4xl font-black text-white">14+</p>
               <p className="text-xs text-slate-300 mt-1 uppercase font-semibold">Active Corridors</p>
             </div>
-            <div>
+            <div className="card-hover p-2 rounded-2xl transition-all duration-300">
               <p className="text-3xl sm:text-4xl font-black text-sky-400">₹3,500</p>
               <p className="text-xs text-slate-300 mt-1 uppercase font-semibold">Starting Fare</p>
             </div>
-            <div>
+            <div className="card-hover p-2 rounded-2xl transition-all duration-300">
               <p className="text-3xl sm:text-4xl font-black text-white">4.9 / 5</p>
               <p className="text-xs text-slate-300 mt-1 uppercase font-semibold">Customer Rating</p>
             </div>
@@ -822,25 +822,26 @@ const Home = () => {
 
       {/* 9. PROMOTIONAL DISCOUNT BANNER */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="bg-gradient-to-r from-navy via-navy-800 to-navy rounded-3xl p-8 sm:p-12 text-white flex flex-col lg:flex-row items-center justify-between gap-8 relative overflow-hidden shadow-2xl border border-navy-800">
+        <div className="bg-gradient-to-r from-navy via-navy-800 to-navy rounded-3xl p-8 sm:p-12 text-white flex flex-col lg:flex-row items-center justify-between gap-8 relative overflow-hidden shadow-2xl border border-navy-800 card-hover">
+          <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 bg-skyblue/15 rounded-full blur-3xl pointer-events-none animate-pulseGlow"></div>
           <div className="relative z-10 space-y-3 max-w-xl">
-            <span className="px-3.5 py-1 bg-skyblue/20 text-skyblue rounded-full text-xs font-bold uppercase border border-skyblue/30">
+            <span className="px-3.5 py-1 bg-skyblue/20 text-skyblue rounded-full text-xs font-bold uppercase border border-skyblue/30 inline-block animate-pulseSubtle">
               Exclusive Domestic Offers
             </span>
             <h3 className="text-2xl sm:text-4xl font-black">
               Save Flat ₹500 on Indian Flights
             </h3>
             <p className="text-slate-300 text-sm leading-relaxed">
-              Use promo code <span className="font-mono font-bold text-white bg-white/20 px-2.5 py-0.5 rounded border border-white/20">SKY500</span> at checkout for an instant flat discount on your booking.
+              Use promo code <span className="font-mono font-bold text-white bg-white/20 px-2.5 py-0.5 rounded border border-white/20 hover:scale-105 inline-block transition-transform">SKY500</span> at checkout for an instant flat discount on your booking.
             </p>
           </div>
           <div className="relative z-10 shrink-0">
             <Link
               to="/offers"
-              className="inline-flex items-center gap-2 px-8 py-4 bg-skyblue hover:bg-white hover:text-navy text-white font-bold rounded-2xl shadow-xl transition-all text-sm cursor-pointer"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-skyblue hover:bg-white hover:text-navy text-white font-bold rounded-2xl shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-200 text-sm cursor-pointer group"
             >
               <span>Explore All Offers</span>
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform duration-200" />
             </Link>
           </div>
         </div>

@@ -56,7 +56,7 @@ const UserHome = () => {
     <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Passenger Header & Quick Actions Bar */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5 p-6 bg-white rounded-3xl border border-slate-200/80 shadow-xs">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5 p-6 bg-white rounded-3xl border border-slate-200/80 shadow-xs animate-fadeInDown">
           <div className="flex items-center gap-4">
             <div className="relative">
               {avatarUrl ? (
@@ -74,7 +74,7 @@ const UserHome = () => {
                   {displayName.charAt(0)}
                 </div>
               )}
-              <div className="absolute -bottom-1 -right-1 bg-emerald-500 text-white p-0.5 rounded-full ring-2 ring-white" title="Verified Account">
+              <div className="absolute -bottom-1 -right-1 bg-emerald-500 text-white p-0.5 rounded-full ring-2 ring-white animate-pulse" title="Verified Account">
                 <ShieldCheck className="w-3.5 h-3.5" />
               </div>
             </div>
@@ -84,7 +84,7 @@ const UserHome = () => {
                 <h1 className="text-xl sm:text-2xl font-black text-navy tracking-tight">
                   Welcome back, {displayName}!
                 </h1>
-                <span className="hidden sm:inline-flex px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span className="hidden sm:inline-flex px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 animate-pulseSubtle">
                   Verified
                 </span>
               </div>
@@ -98,15 +98,15 @@ const UserHome = () => {
           <div className="flex items-center gap-3 self-stretch sm:self-auto justify-end">
             <Link
               to="/search"
-              className="px-4 py-2.5 bg-navy hover:bg-skyblue text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center gap-2 cursor-pointer"
+              className="px-4 py-2.5 bg-navy hover:bg-skyblue text-white text-xs font-bold rounded-xl shadow-xs hover:shadow-lg hover:shadow-sky-400/25 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 flex items-center gap-2 cursor-pointer group"
             >
-              <Plane className="w-3.5 h-3.5 text-skyblue" />
+              <Plane className="w-3.5 h-3.5 text-skyblue group-hover:rotate-45 transition-transform duration-300" />
               <span>Book a Flight</span>
             </Link>
             <button
               type="button"
               onClick={handleLogout}
-              className="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-bold rounded-xl transition flex items-center gap-2 cursor-pointer"
+              className="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-bold rounded-xl active:scale-95 transition-all duration-200 flex items-center gap-2 cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span>Logout</span>
@@ -117,7 +117,7 @@ const UserHome = () => {
         {/* Dashboard Grid Overview */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Card 1: Account Status */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4">
+          <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4 card-hover hover:border-sky-300 transition-all duration-300 animate-fadeInUp delay-100">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Account Credentials</h3>
               <span className="p-2 bg-sky-50 text-skyblue rounded-xl">
@@ -127,7 +127,7 @@ const UserHome = () => {
             <div>
               <p className="text-xs text-slate-500">Authentication Provider</p>
               <p className="text-sm font-bold text-navy flex items-center gap-1.5 mt-0.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
                 Google Firebase OAuth
               </p>
             </div>
@@ -139,10 +139,10 @@ const UserHome = () => {
           </div>
 
           {/* Card 2: Frequent Flyer / Rewards */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4">
+          <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4 card-hover hover:border-amber-300 animate-fadeInUp delay-200 group">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Membership Tier</h3>
-              <span className="p-2 bg-amber-50 text-amber-500 rounded-xl">
+              <span className="p-2 bg-amber-50 text-amber-500 rounded-xl group-hover:rotate-12 group-hover:scale-110 transition-transform duration-300">
                 <Sparkles className="w-4 h-4" />
               </span>
             </div>
@@ -159,10 +159,10 @@ const UserHome = () => {
           </div>
 
           {/* Card 3: Quick Bookings Status */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4">
+          <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4 card-hover hover:border-indigo-300 animate-fadeInUp delay-300 group">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Itineraries</h3>
-              <span className="p-2 bg-indigo-50 text-indigo-500 rounded-xl">
+              <span className="p-2 bg-indigo-50 text-indigo-500 rounded-xl group-hover:rotate-6 group-hover:scale-110 transition-transform duration-300">
                 <Ticket className="w-4 h-4" />
               </span>
             </div>
@@ -173,7 +173,7 @@ const UserHome = () => {
               </p>
             </div>
             <div className="pt-2 border-t border-slate-100">
-              <Link to="/my-bookings" className="text-xs font-bold text-skyblue hover:underline flex items-center gap-1">
+              <Link to="/my-bookings" className="text-xs font-bold text-skyblue hover:underline flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
                 <span>View all bookings</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </Link>
@@ -191,9 +191,9 @@ const UserHome = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <Link
               to="/search"
-              className="p-5 bg-white hover:bg-slate-50 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-sm transition group cursor-pointer"
+              className="p-5 bg-white hover:bg-sky-50/40 rounded-2xl border border-slate-200/80 shadow-2xs card-hover hover:border-sky-300 group cursor-pointer transition-all duration-300"
             >
-              <div className="w-10 h-10 rounded-xl bg-sky-50 text-skyblue flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+              <div className="w-10 h-10 rounded-xl bg-sky-50 text-skyblue flex items-center justify-center mb-3 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 shadow-2xs">
                 <Search className="w-5 h-5" />
               </div>
               <h4 className="text-sm font-bold text-navy group-hover:text-skyblue transition">Search Flights</h4>
@@ -202,9 +202,9 @@ const UserHome = () => {
 
             <Link
               to="/my-bookings"
-              className="p-5 bg-white hover:bg-slate-50 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-sm transition group cursor-pointer"
+              className="p-5 bg-white hover:bg-indigo-50/40 rounded-2xl border border-slate-200/80 shadow-2xs card-hover hover:border-indigo-300 group cursor-pointer transition-all duration-300"
             >
-              <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+              <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 shadow-2xs">
                 <Ticket className="w-5 h-5" />
               </div>
               <h4 className="text-sm font-bold text-navy group-hover:text-indigo-600 transition">My Bookings</h4>
@@ -213,9 +213,9 @@ const UserHome = () => {
 
             <Link
               to="/profile"
-              className="p-5 bg-white hover:bg-slate-50 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-sm transition group cursor-pointer"
+              className="p-5 bg-white hover:bg-emerald-50/40 rounded-2xl border border-slate-200/80 shadow-2xs card-hover hover:border-emerald-300 group cursor-pointer transition-all duration-300"
             >
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 shadow-2xs">
                 <User className="w-5 h-5" />
               </div>
               <h4 className="text-sm font-bold text-navy group-hover:text-emerald-600 transition">Travel Profile</h4>
@@ -224,9 +224,9 @@ const UserHome = () => {
 
             <Link
               to="/offers"
-              className="p-5 bg-white hover:bg-slate-50 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-sm transition group cursor-pointer"
+              className="p-5 bg-white hover:bg-amber-50/40 rounded-2xl border border-slate-200/80 shadow-2xs card-hover hover:border-amber-300 group cursor-pointer transition-all duration-300"
             >
-              <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+              <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-3 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 shadow-2xs">
                 <Sparkles className="w-5 h-5" />
               </div>
               <h4 className="text-sm font-bold text-navy group-hover:text-amber-600 transition">Member Offers</h4>
@@ -244,10 +244,10 @@ const UserHome = () => {
             </div>
             <Link
               to="/my-bookings"
-              className="text-xs font-bold text-skyblue hover:underline flex items-center gap-1"
+              className="text-xs font-bold text-skyblue hover:underline flex items-center gap-1 group"
             >
               <span>Manage all</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
 
@@ -261,10 +261,10 @@ const UserHome = () => {
               {recentBookings.map((b) => (
                 <div
                   key={b._id}
-                  className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-sky-300 transition"
+                  className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4 card-hover hover:border-sky-300 hover:bg-white transition-all duration-300 group"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-navy text-white flex items-center justify-center text-xs font-black">
+                    <div className="w-10 h-10 rounded-xl bg-navy text-white flex items-center justify-center text-xs font-black group-hover:bg-skyblue group-hover:scale-105 transition-all duration-300">
                       {b.flight?.flightNumber || 'SK'}
                     </div>
                     <div>
@@ -278,12 +278,12 @@ const UserHome = () => {
                   </div>
 
                   <div className="flex items-center gap-3 justify-between sm:justify-end">
-                    <span className="px-2.5 py-1 text-[10px] font-extrabold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    <span className="px-2.5 py-1 text-[10px] font-extrabold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-2xs">
                       {b.status || 'CONFIRMED'}
                     </span>
                     <Link
                       to={`/my-bookings`}
-                      className="px-3 py-1.5 bg-white text-navy text-xs font-bold rounded-xl border border-slate-200 hover:bg-slate-100 transition shadow-2xs"
+                      className="px-3 py-1.5 bg-white text-navy text-xs font-bold rounded-xl border border-slate-200 hover:bg-navy hover:text-white hover:border-navy active:scale-95 transition-all duration-200 shadow-2xs"
                     >
                       View Ticket
                     </Link>

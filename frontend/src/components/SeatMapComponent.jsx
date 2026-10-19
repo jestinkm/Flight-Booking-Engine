@@ -78,13 +78,13 @@ const SeatMapComponent = ({
     const isOccupied = status === 'OCCUPIED' || status === 'ASSIGNED';
     const isBlocked = status === 'BLOCKED';
 
-    let colorStyles = 'bg-white border-emerald-500 text-emerald-700 hover:bg-emerald-50 cursor-pointer shadow-xs';
+    let colorStyles = 'bg-white border-emerald-500 text-emerald-700 hover:bg-emerald-500 hover:text-white hover:scale-110 active:scale-90 hover:shadow-md cursor-pointer shadow-xs';
     if (isSelected) {
-      colorStyles = 'bg-skyblue border-skyblue text-white shadow-md scale-105 font-bold cursor-pointer';
+      colorStyles = 'bg-skyblue border-skyblue text-white shadow-lg shadow-sky-400/30 scale-105 ring-2 ring-sky-300 ring-offset-1 font-bold animate-scaleUp cursor-pointer';
     } else if (isOccupied) {
-      colorStyles = 'bg-slate-200 border-slate-300 text-slate-400 cursor-not-allowed';
+      colorStyles = 'bg-slate-100 border-slate-200 text-slate-300 cursor-not-allowed opacity-60';
     } else if (isBlocked) {
-      colorStyles = 'bg-rose-100 border-rose-300 text-rose-400 cursor-not-allowed';
+      colorStyles = 'bg-rose-50 border-rose-200 text-rose-300 cursor-not-allowed opacity-60';
     }
 
     return (
@@ -94,11 +94,11 @@ const SeatMapComponent = ({
         disabled={isOccupied || isBlocked || readOnly}
         onClick={() => handleSeatClick(seatNumber, status)}
         title={`Seat ${seatNumber} (${position}) - ${status}`}
-        className={`relative w-8 h-8 sm:w-10 sm:h-10 rounded-lg border-2 flex flex-col items-center justify-center transition-all duration-150 text-xs ${colorStyles}`}
+        className={`relative w-8 h-8 sm:w-10 sm:h-10 rounded-xl border-2 flex flex-col items-center justify-center transition-all duration-200 text-xs ${colorStyles}`}
       >
         <span className="font-semibold text-[11px] leading-none">{col}</span>
         {isSelected ? (
-          <Check className="w-3 h-3 text-white mt-0.5" />
+          <Check className="w-3 h-3 text-white mt-0.5 animate-scaleUp" />
         ) : (
           <span className="text-[8px] opacity-70 leading-none mt-0.5">
             {position[0]}

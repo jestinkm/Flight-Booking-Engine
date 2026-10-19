@@ -140,10 +140,10 @@ const MyBookings = () => {
     <div className="min-h-screen bg-slate-50 py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200/80 gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200/80 gap-4 animate-fadeInDown">
           <div>
             <h1 className="text-3xl font-black text-navy flex items-center gap-2.5">
-              <Ticket className="w-8 h-8 text-skyblue" /> My Flight Bookings
+              <Ticket className="w-8 h-8 text-skyblue animate-pulseSubtle" /> My Flight Bookings
             </h1>
             <p className="text-xs text-slate-500 mt-1">
               Manage all upcoming trips, download boarding cards, and view flight history.
@@ -152,9 +152,10 @@ const MyBookings = () => {
 
           <Link
             to="/search"
-            className="px-5 py-2.5 bg-navy hover:bg-skyblue text-white text-xs font-bold rounded-xl shadow-sm transition self-start sm:self-auto flex items-center gap-2"
+            className="px-5 py-2.5 bg-navy hover:bg-skyblue text-white text-xs font-bold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 active:scale-95 self-start sm:self-auto flex items-center gap-2 group"
           >
-            <Plane className="w-4 h-4" /> Book a New Flight
+            <Plane className="w-4 h-4 group-hover:rotate-45 transition-transform duration-300" /> 
+            <span>Book a New Flight</span>
           </Link>
         </div>
 
@@ -171,7 +172,7 @@ const MyBookings = () => {
                 setActiveTab(tab.id);
                 setCurrentPage(1);
               }}
-              className={`pb-3 border-b-2 transition font-bold cursor-pointer ${
+              className={`pb-3 border-b-2 transition-all duration-200 font-bold cursor-pointer hover:scale-105 active:scale-95 ${
                 activeTab === tab.id
                   ? 'border-skyblue text-skyblue'
                   : 'border-transparent text-slate-500 hover:text-navy'
@@ -186,7 +187,7 @@ const MyBookings = () => {
         {loading ? (
           <LoadingSpinner message="Retrieving your bookings..." className="min-h-[40vh]" />
         ) : paginatedList.length > 0 ? (
-          <div className="space-y-4">
+          <div className="space-y-4 animate-fadeInUp">
             {paginatedList.map((booking) => (
               <BookingCard
                 key={booking.id || booking._id}

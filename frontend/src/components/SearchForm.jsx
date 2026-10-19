@@ -140,10 +140,10 @@ const SearchForm = ({ initialValues = {}, className = '', compact = false }) => 
           <button
             type="button"
             onClick={handleSwap}
-            className="w-9 h-9 rounded-full bg-slate-100 hover:bg-skyblue hover:text-white text-navy flex items-center justify-center border border-slate-200 transition shadow-xs"
+            className="w-9 h-9 rounded-full bg-slate-100 hover:bg-skyblue hover:text-white text-navy flex items-center justify-center border border-slate-200 transition-all duration-300 hover:rotate-180 hover:scale-110 active:scale-90 shadow-xs cursor-pointer"
             title="Swap locations"
           >
-            <ArrowRightLeft className="w-4 h-4" />
+            <ArrowRightLeft className="w-4 h-4 transition-transform duration-300" />
           </button>
         </div>
 
@@ -203,7 +203,7 @@ const SearchForm = ({ initialValues = {}, className = '', compact = false }) => 
           </div>
 
           {passengerDropdownOpen && (
-            <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-100 p-4 z-50 animate-fadeIn">
+            <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-slate-100 p-4 z-50 animate-scaleUp transform origin-top-right">
               <div className="flex items-center justify-between py-2 border-b border-slate-100">
                 <div>
                   <p className="text-sm font-bold text-navy">Adults</p>
@@ -213,7 +213,7 @@ const SearchForm = ({ initialValues = {}, className = '', compact = false }) => 
                   <button
                     type="button"
                     onClick={() => setAdults(Math.max(1, adults - 1))}
-                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold text-navy flex items-center justify-center disabled:opacity-40"
+                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold text-navy flex items-center justify-center disabled:opacity-40 active:scale-90 transition-transform"
                     disabled={adults <= 1}
                   >
                     -
@@ -222,7 +222,7 @@ const SearchForm = ({ initialValues = {}, className = '', compact = false }) => 
                   <button
                     type="button"
                     onClick={() => setAdults(Math.min(9, adults + 1))}
-                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold text-navy flex items-center justify-center disabled:opacity-40"
+                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold text-navy flex items-center justify-center disabled:opacity-40 active:scale-90 transition-transform"
                     disabled={adults + children >= 9}
                   >
                     +
@@ -239,7 +239,7 @@ const SearchForm = ({ initialValues = {}, className = '', compact = false }) => 
                   <button
                     type="button"
                     onClick={() => setChildren(Math.max(0, children - 1))}
-                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold text-navy flex items-center justify-center disabled:opacity-40"
+                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold text-navy flex items-center justify-center disabled:opacity-40 active:scale-90 transition-transform"
                     disabled={children <= 0}
                   >
                     -
@@ -248,7 +248,7 @@ const SearchForm = ({ initialValues = {}, className = '', compact = false }) => 
                   <button
                     type="button"
                     onClick={() => setChildren(Math.min(6, children + 1))}
-                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold text-navy flex items-center justify-center disabled:opacity-40"
+                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold text-navy flex items-center justify-center disabled:opacity-40 active:scale-90 transition-transform"
                     disabled={adults + children >= 9}
                   >
                     +
@@ -259,7 +259,7 @@ const SearchForm = ({ initialValues = {}, className = '', compact = false }) => 
               <button
                 type="button"
                 onClick={() => setPassengerDropdownOpen(false)}
-                className="mt-3 w-full py-1.5 text-xs font-bold text-white bg-navy hover:bg-navy-800 rounded-lg"
+                className="mt-3 w-full py-2 text-xs font-bold text-white bg-navy hover:bg-skyblue rounded-xl shadow-xs transition active:scale-95 cursor-pointer"
               >
                 Done
               </button>
@@ -271,10 +271,10 @@ const SearchForm = ({ initialValues = {}, className = '', compact = false }) => 
       <div className="mt-4 flex justify-end">
         <button
           type="submit"
-          className="w-full md:w-auto px-8 py-3.5 bg-skyblue hover:bg-navy text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 text-sm"
+          className="group w-full md:w-auto px-8 py-3.5 bg-skyblue hover:bg-navy text-white font-bold rounded-xl shadow-md hover:shadow-xl hover:shadow-sky-400/25 hover:-translate-y-0.5 active:scale-95 transition-all duration-300 flex items-center justify-center gap-2.5 text-sm cursor-pointer"
         >
-          <Search className="w-4 h-4" />
-          Search Flights
+          <Search className="w-4 h-4 group-hover:scale-125 group-hover:rotate-12 transition-transform duration-300" />
+          <span>Search Flights</span>
         </button>
       </div>
     </form>

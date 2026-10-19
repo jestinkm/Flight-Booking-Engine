@@ -70,13 +70,20 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <Link to="/" className="inline-flex items-center gap-2.5 group mb-6">
-          <div className="w-12 h-12 rounded-2xl bg-navy flex items-center justify-center text-white shadow-lg group-hover:scale-105 transition">
-            <Plane className="w-6 h-6 text-skyblue rotate-45" />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-sky-50/40 to-indigo-50/30 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Background Animated Gradient Blobs */}
+      <div className="absolute top-10 left-1/2 -translate-x-1/2 -z-10 w-[600px] h-[350px] bg-gradient-to-tr from-sky-200/40 via-blue-100/30 to-indigo-100/20 blur-3xl rounded-full pointer-events-none animate-floatSlow" />
+      <div className="absolute -bottom-20 -right-20 -z-10 w-80 h-80 bg-skyblue/15 blur-3xl rounded-full pointer-events-none animate-pulseGlow" />
+
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center animate-fadeInDown">
+        <Link to="/" className="inline-flex items-center gap-2.5 group mb-4">
+          <div className="w-12 h-12 rounded-2xl bg-navy flex items-center justify-center text-white shadow-xl shadow-navy/20 group-hover:scale-110 group-hover:rotate-6 group-hover:shadow-skyblue/30 transition-all duration-300">
+            <Plane className="w-6 h-6 text-skyblue rotate-45 group-hover:rotate-90 transition-transform duration-500" />
           </div>
-          <span className="text-2xl font-black text-navy tracking-tight">SKYNEXA</span>
+          <div className="flex items-center gap-1">
+            <span className="text-2xl font-black text-navy tracking-tight group-hover:text-skyblue transition-colors duration-300">SKYNEXA</span>
+            <span className="w-2 h-2 rounded-full bg-skyblue animate-pulse"></span>
+          </div>
         </Link>
         <h2 className="text-2xl sm:text-3xl font-extrabold text-navy">
           Create Passenger Account
@@ -86,8 +93,8 @@ const Register = () => {
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-lg px-4">
-        <div className="bg-white py-8 px-6 sm:px-10 rounded-3xl border border-slate-200/80 shadow-xl space-y-6">
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-lg px-4 animate-fadeInUp">
+        <div className="bg-white/95 backdrop-blur-md py-8 px-6 sm:px-10 rounded-3xl border border-slate-200/90 shadow-2xl shadow-navy/5 space-y-6 transition-all duration-300 hover:shadow-navy/10 hover:border-sky-200">
           {/* Google Sign-Up Button */}
           <div>
             <GoogleAuthButton redirectTo="/" label="Sign up with Google" />
@@ -259,10 +266,10 @@ const Register = () => {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full mt-4 py-3.5 bg-navy hover:bg-navy-800 text-white font-extrabold rounded-xl shadow-md transition flex items-center justify-center gap-2 text-sm disabled:opacity-50 cursor-pointer"
+              className="group w-full mt-4 py-3.5 bg-navy hover:bg-skyblue text-white font-extrabold rounded-xl shadow-md hover:shadow-xl hover:shadow-sky-400/25 hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 text-sm disabled:opacity-50 cursor-pointer"
             >
               <span>{submitting ? 'Registering Account...' : 'Complete Registration'}</span>
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform duration-200" />
             </button>
           </form>
 
