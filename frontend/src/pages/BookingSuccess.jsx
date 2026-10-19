@@ -19,11 +19,13 @@ import {
   Check,
   CreditCard,
   Hash,
-  ArrowLeft
+  ArrowLeft,
+  Download
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import api from '../lib/axios';
+import BookingConfirmationAnimation from '../components/BookingConfirmationAnimation';
 
 const BookingSuccess = () => {
   const { bookingId } = useParams();
@@ -292,93 +294,9 @@ const BookingSuccess = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 py-10 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Full-Screen Green Tick Overlay (Only shown on confirmed bookings) */}
+      {/* Full-Screen Blue Confirmation Sequence (Only shown when backend confirms booking is successful) */}
       {showFullScreenTick && isConfirmed && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-950/90 backdrop-blur-xl animate-fadeIn p-6 text-center select-none">
-          <style>{`
-            @keyframes drawTick {
-              0% { stroke-dashoffset: 100; opacity: 0; }
-              40% { opacity: 1; }
-              100% { stroke-dashoffset: 0; opacity: 1; }
-            }
-            @keyframes pulseGlow {
-              0%, 100% { transform: scale(1); box-shadow: 0 0 50px rgba(16, 185, 129, 0.5); }
-              50% { transform: scale(1.05); box-shadow: 0 0 90px rgba(16, 185, 129, 0.8); }
-            }
-          `}</style>
-
-          <div className="relative flex flex-col items-center max-w-lg w-full space-y-6">
-            <div className="relative flex items-center justify-center my-4">
-              <div className="absolute w-52 h-52 rounded-full bg-emerald-500/20 animate-ping"></div>
-              <div className="absolute w-40 h-40 rounded-full bg-emerald-400/30 animate-pulse"></div>
-
-              <div
-                className="relative w-32 h-32 rounded-full bg-gradient-to-tr from-emerald-600 via-emerald-500 to-teal-400 flex items-center justify-center ring-8 ring-emerald-400/30"
-                style={{ animation: 'pulseGlow 2.5s infinite ease-in-out' }}
-              >
-                <svg className="w-20 h-20 text-white drop-shadow-md" viewBox="0 0 52 52">
-                  <circle
-                    cx="26"
-                    cy="26"
-                    r="23"
-                    fill="none"
-                    stroke="rgba(255,255,255,0.3)"
-                    strokeWidth="3"
-                  />
-                  <path
-                    fill="none"
-                    stroke="#ffffff"
-                    strokeWidth="5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeDasharray="100"
-                    strokeDashoffset="0"
-                    d="M14 27l8 8 16-16"
-                    style={{ animation: 'drawTick 0.9s cubic-bezier(0.65, 0, 0.45, 1) forwards' }}
-                  />
-                </svg>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-xs font-black uppercase tracking-widest shadow-inner">
-                <Sparkles className="w-4 h-4 text-emerald-400" />
-                <span>Payment Confirmed &amp; Seats Allocated</span>
-              </div>
-
-              <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tight">
-                Booking Confirmed!
-              </h2>
-
-              <p className="text-sm sm:text-base text-slate-300 max-w-md mx-auto leading-relaxed">
-                Your flight booking is secured. Seat reservations are saved in MongoDB and an official E-Ticket has been dispatched.
-              </p>
-
-              <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3 text-xs font-semibold text-emerald-300">
-                <span className="flex items-center gap-1.5 bg-emerald-950/60 border border-emerald-500/30 px-3 py-1.5 rounded-xl">
-                  <Check className="w-4 h-4 text-emerald-400" /> PNR #{bookingRef}
-                </span>
-                <span className="flex items-center gap-1.5 bg-emerald-950/60 border border-emerald-500/30 px-3 py-1.5 rounded-xl">
-                  <Armchair className="w-4 h-4 text-emerald-400" /> Seats: {seats.map(normalizeSeat).filter(Boolean).join(', ') || '1A'}
-                </span>
-                <span className="flex items-center gap-1.5 bg-emerald-950/60 border border-emerald-500/30 px-3 py-1.5 rounded-xl">
-                  <Mail className="w-4 h-4 text-emerald-400" /> E-Ticket Sent
-                </span>
-              </div>
-            </div>
-
-            <div className="pt-4 w-full max-w-sm space-y-2">
-              <button
-                type="button"
-                onClick={() => setShowFullScreenTick(false)}
-                className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-400 text-white font-black text-sm shadow-xl hover:shadow-emerald-500/30 transition flex items-center justify-center gap-2 cursor-pointer transform hover:-translate-y-0.5"
-              >
-                <span>View Boarding Pass &amp; Details</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
+        <BookingConfirmationAnimation onComplete={() => setShowFullScreenTick(false)} />
       )}
 
       {/* Confetti Animation */}
@@ -499,7 +417,7 @@ const BookingSuccess = () => {
         </div>
 
         {/* Boarding Pass / Ticket Summary Card */}
-        <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xl overflow-hidden relative">
+        <div id="booking-confirmation-card" className="bg-white rounded-3xl border border-slate-200/80 shadow-2xl overflow-hidden relative card-hover transition-all duration-300">
           {/* Top Navy Header Banner */}
           <div className="bg-gradient-to-r from-navy via-navy-800 to-navy p-6 sm:p-8 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-1">
@@ -831,24 +749,43 @@ const BookingSuccess = () => {
 
           {/* Action Footer Buttons */}
           <div className="bg-slate-50 p-6 sm:p-8 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <button
-              onClick={handlePrintTicket}
-              className="w-full sm:w-auto px-5 py-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-navy font-bold text-xs transition flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
-            >
-              <Printer className="w-4 h-4 text-slate-500" />
-              <span>Print / Download e-Ticket</span>
-            </button>
+            <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+              {/* View Ticket button */}
+              <button
+                type="button"
+                onClick={() => {
+                  document.getElementById('booking-confirmation-card')?.scrollIntoView({ behavior: 'smooth' });
+                  toast.success('Viewing verified electronic boarding pass & itinerary below.');
+                }}
+                className="flex-1 sm:flex-none px-5 py-3 rounded-xl bg-white hover:bg-slate-100 text-navy font-bold text-xs border border-slate-200 shadow-2xs transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer hover:scale-105 active:scale-95"
+              >
+                <Ticket className="w-4 h-4 text-skyblue" />
+                <span>View Ticket</span>
+              </button>
+
+              {/* Download Ticket button */}
+              <button
+                type="button"
+                onClick={handlePrintTicket}
+                className="flex-1 sm:flex-none px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer hover:scale-105 active:scale-95"
+              >
+                <Download className="w-4 h-4 text-white" />
+                <span>Download Ticket</span>
+              </button>
+            </div>
 
             <div className="flex items-center gap-3 w-full sm:w-auto">
+              {/* Go to My Bookings button */}
               <Link
                 to="/my-bookings"
-                className="flex-1 sm:flex-none px-6 py-3 rounded-xl bg-navy hover:bg-skyblue text-white font-bold text-xs transition text-center shadow-md cursor-pointer"
+                className="flex-1 sm:flex-none px-6 py-3 rounded-xl bg-navy hover:bg-skyblue text-white font-bold text-xs transition-all duration-200 text-center shadow-md hover:scale-105 active:scale-95 cursor-pointer flex items-center justify-center gap-2"
               >
-                View My Bookings
+                <span>Go to My Bookings</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </Link>
               <Link
                 to="/search"
-                className="flex-1 sm:flex-none px-5 py-3 rounded-xl bg-slate-200 hover:bg-slate-300 text-navy font-bold text-xs transition text-center cursor-pointer"
+                className="flex-1 sm:flex-none px-5 py-3 rounded-xl bg-slate-200 hover:bg-slate-300 text-navy font-bold text-xs transition-all duration-200 text-center cursor-pointer hover:scale-105 active:scale-95"
               >
                 Search Flights
               </Link>

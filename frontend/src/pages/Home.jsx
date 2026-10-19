@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import api from '../lib/axios';
 import SearchForm from '../components/SearchForm';
+import HeroFlightAnimation from '../components/HeroFlightAnimation';
 
 const LIVE_DEPARTURES_BOARD = [
   { flight: 'SK-101', route: 'Chennai (MAA) → Bengaluru (BLR)', time: '08:30 AM', status: 'ON TIME', gate: 'Gate 4B', statusColor: 'text-emerald-400 bg-emerald-500/20' },
@@ -235,6 +236,9 @@ const Home = () => {
 
       {/* 2. HERO SECTION WITH LUXURY COLOR PALETTE & LIVE TELEMETRY RADAR */}
       <section className="relative bg-gradient-to-br from-[#030914] via-[#071527] to-[#0c2e56] text-white pt-16 pb-36 sm:pb-44 px-4 sm:px-6 lg:px-8 overflow-hidden">
+        {/* Live Flying Airplane & Moving Clouds Layer */}
+        <HeroFlightAnimation />
+
         {/* Ambient atmospheric glows */}
         <div className="absolute top-0 right-0 -mr-24 -mt-24 w-[500px] h-[500px] bg-skyblue/25 rounded-full blur-3xl pointer-events-none animate-pulseGlow"></div>
         <div className="absolute bottom-0 left-0 -ml-24 -mb-24 w-[450px] h-[450px] bg-sky-500/15 rounded-full blur-3xl pointer-events-none"></div>
