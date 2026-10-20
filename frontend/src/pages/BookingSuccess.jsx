@@ -21,7 +21,8 @@ import {
   Hash,
   ArrowLeft,
   Download,
-  Volume2
+  Volume2,
+  Home
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
@@ -370,11 +371,11 @@ const BookingSuccess = () => {
               <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-black uppercase rounded-full tracking-wider">
                 <Sparkles className="w-3.5 h-3.5" /> Booking Confirmed &amp; Seats Allocated
               </div>
-              <h1 className="text-3xl sm:text-4xl font-black text-navy tracking-tight">
-                Booking Confirmed Successfully!
+              <h1 className="text-3xl sm:text-4xl font-black text-navy tracking-tight flex items-center justify-center gap-2">
+                <span className="text-emerald-600 font-black">✓</span> Booking Confirmed!
               </h1>
               <p className="text-sm text-slate-500 font-medium max-w-md mx-auto">
-                Your flight is confirmed and your tickets are issued. A confirmation copy has been dispatched to your email.
+                Your journey is officially booked with SKYNEXA.
               </p>
               <div className="pt-2 flex items-center justify-center gap-3">
                 <button
@@ -488,8 +489,13 @@ const BookingSuccess = () => {
                       <Plane className="w-5 h-5 rotate-45" />
                     </div>
                     <div>
-                      <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Passenger Name</p>
-                      <p className="text-base sm:text-lg font-black text-navy">{primaryPassengerName}</p>
+                      <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Traveler Details</p>
+                      <p className="text-base sm:text-lg font-black text-navy">
+                        {primaryPassengerName}{' '}
+                        <span className="text-xs font-bold text-skyblue">
+                          • {passengerList.length} Passenger{passengerList.length > 1 ? 's' : ''}
+                        </span>
+                      </p>
                     </div>
                   </div>
 
@@ -510,8 +516,9 @@ const BookingSuccess = () => {
                     <span className="font-mono font-black text-sm sm:text-base text-navy">{bookingRef}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 text-[10px] font-bold block uppercase tracking-wider mb-0.5">Flight Number</span>
+                    <span className="text-slate-400 text-[10px] font-bold block uppercase tracking-wider mb-0.5">Flight Details</span>
                     <span className="font-mono font-black text-sm sm:text-base text-skyblue">{flightNumber}</span>
+                    <span className="text-[10px] text-slate-400 block font-semibold">{aircraft}</span>
                   </div>
                   <div>
                     <span className="text-slate-400 text-[10px] font-bold block uppercase tracking-wider mb-0.5">Departure &amp; Destination</span>
@@ -525,25 +532,31 @@ const BookingSuccess = () => {
                   </div>
                 </div>
 
-                {/* Two Animated Buttons */}
+                {/* Animated Action Buttons (Download E-Ticket, View My Bookings, Back to Home) */}
                 <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
                   <button
                     type="button"
                     onClick={handlePrintTicket}
-                    className="relative group w-full sm:w-auto flex-1 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2.5 cursor-pointer transform hover:-translate-y-0.5 active:translate-y-0 hover:scale-[1.02] ring-2 ring-emerald-400/20 overflow-hidden"
+                    className="relative group w-full sm:w-auto flex-1 px-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer transform hover:-translate-y-0.5 active:translate-y-0 hover:scale-[1.02] ring-2 ring-emerald-400/20 overflow-hidden"
                   >
-                    <span className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none" />
-                    <Download className="w-4 h-4 text-white animate-bounce" />
+                    <Download className="w-4 h-4 text-white" />
                     <span>Download E-Ticket</span>
                   </button>
 
                   <Link
                     to="/my-bookings"
-                    className="relative group w-full sm:w-auto flex-1 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-navy via-navy-800 to-[#007BFF] hover:from-[#007BFF] hover:to-navy text-white font-extrabold text-xs shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2.5 cursor-pointer transform hover:-translate-y-0.5 active:translate-y-0 hover:scale-[1.02] ring-2 ring-sky-400/20 overflow-hidden"
+                    className="relative group w-full sm:w-auto flex-1 px-5 py-3 rounded-2xl bg-gradient-to-r from-navy via-navy-800 to-[#007BFF] hover:from-[#007BFF] hover:to-navy text-white font-extrabold text-xs shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer transform hover:-translate-y-0.5 active:translate-y-0 hover:scale-[1.02] ring-2 ring-sky-400/20 overflow-hidden"
                   >
-                    <span className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none" />
                     <span>View My Bookings</span>
                     <ArrowRight className="w-4 h-4 text-sky-300 transition-transform duration-200 group-hover:translate-x-1" />
+                  </Link>
+
+                  <Link
+                    to="/"
+                    className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-navy font-bold text-xs transition-all duration-200 text-center flex items-center justify-center gap-1.5 hover:scale-105 active:scale-95 cursor-pointer shadow-2xs"
+                  >
+                    <Home className="w-4 h-4 text-slate-500" />
+                    <span>Back to Home</span>
                   </Link>
                 </div>
               </div>
@@ -879,9 +892,16 @@ const BookingSuccess = () => {
               </Link>
               <Link
                 to="/search"
-                className="flex-1 sm:flex-none px-5 py-3 rounded-xl bg-slate-200 hover:bg-slate-300 text-navy font-bold text-xs transition-all duration-200 text-center cursor-pointer hover:scale-105 active:scale-95"
+                className="flex-1 sm:flex-none px-4 py-3 rounded-xl bg-slate-200 hover:bg-slate-300 text-navy font-bold text-xs transition-all duration-200 text-center cursor-pointer hover:scale-105 active:scale-95"
               >
                 Search Flights
+              </Link>
+              <Link
+                to="/"
+                className="flex-1 sm:flex-none px-4 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-all duration-200 text-center cursor-pointer hover:scale-105 active:scale-95 flex items-center justify-center gap-1.5"
+              >
+                <Home className="w-3.5 h-3.5" />
+                <span>Home</span>
               </Link>
             </div>
           </div>
