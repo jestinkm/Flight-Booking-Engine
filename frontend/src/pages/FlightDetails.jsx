@@ -231,7 +231,7 @@ const FlightDetails = () => {
                     <div className="flex items-center border border-slate-200 rounded-xl bg-slate-50 p-1">
                       <button
                         type="button"
-                        onClick={() => setAdults(Math.max(1, adults - 1))}
+                        onClick={() => setAdults((a) => Math.max(1, a - 1))}
                         disabled={adults <= 1}
                         className="w-7 h-7 rounded-lg bg-white shadow-2xs font-black text-navy text-sm flex items-center justify-center hover:bg-slate-100 disabled:opacity-40 cursor-pointer"
                       >
@@ -240,7 +240,7 @@ const FlightDetails = () => {
                       <span className="w-8 text-center text-sm font-bold text-navy">{adults}</span>
                       <button
                         type="button"
-                        onClick={() => setAdults(Math.min(9, adults + 1))}
+                        onClick={() => setAdults((a) => (a + children < 9 ? a + 1 : a))}
                         disabled={adults + children >= 9}
                         className="w-7 h-7 rounded-lg bg-white shadow-2xs font-black text-navy text-sm flex items-center justify-center hover:bg-slate-100 disabled:opacity-40 cursor-pointer"
                       >
@@ -258,7 +258,7 @@ const FlightDetails = () => {
                     <div className="flex items-center border border-slate-200 rounded-xl bg-slate-50 p-1">
                       <button
                         type="button"
-                        onClick={() => setChildren(Math.max(0, children - 1))}
+                        onClick={() => setChildren((c) => Math.max(0, c - 1))}
                         disabled={children <= 0}
                         className="w-7 h-7 rounded-lg bg-white shadow-2xs font-black text-navy text-sm flex items-center justify-center hover:bg-slate-100 disabled:opacity-40 cursor-pointer"
                       >
@@ -267,7 +267,7 @@ const FlightDetails = () => {
                       <span className="w-8 text-center text-sm font-bold text-navy">{children}</span>
                       <button
                         type="button"
-                        onClick={() => setChildren(Math.min(6, children + 1))}
+                        onClick={() => setChildren((c) => (adults + c < 9 ? c + 1 : c))}
                         disabled={adults + children >= 9}
                         className="w-7 h-7 rounded-lg bg-white shadow-2xs font-black text-navy text-sm flex items-center justify-center hover:bg-slate-100 disabled:opacity-40 cursor-pointer"
                       >

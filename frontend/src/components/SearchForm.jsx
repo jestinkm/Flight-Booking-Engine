@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plane, Calendar, Users, ArrowRightLeft, Search } from 'lucide-react';
 import api from '../lib/axios';
@@ -38,6 +38,7 @@ const DEFAULT_AIRPORTS = [
 
 const SearchForm = ({ initialValues = {}, className = '', compact = false }) => {
   const navigate = useNavigate();
+  const passengerDropdownRef = useRef(null);
   const [airports, setAirports] = useState(DEFAULT_AIRPORTS);
 
   const todayStr = new Date().toISOString().split('T')[0];
@@ -45,11 +46,58 @@ const SearchForm = ({ initialValues = {}, className = '', compact = false }) => 
   const [origin, setOrigin] = useState(initialValues.origin || 'DEL');
   const [destination, setDestination] = useState(initialValues.destination || 'BOM');
   const [departureDate, setDepartureDate] = useState(initialValues.date || todayStr);
-  const [adults, setAdults] = useState(Number(initialValues.adults) || 1);
-  const [children, setChildren] = useState(Number(initialValues.children) || 0);
+
+  // Defaults: Adults: 1, Children: 0, Total: 1 Traveler
+  const [adults, setAdults] = useState(() => {
+    const val = Number(initialValues.adults);
+    return !isNaN(val) && val >= 1 ? val : 1;
+  });
+  const [children, setChildren] = useState(() => {
+    const val = Number(initialValues.children);
+    return !isNaN(val) && val >= 0 ? val : 0;
+  });
   const [passengerDropdownOpen, setPassengerDropdownOpen] = useState(false);
   const [error, setError] = useState('');
 
+  // Keep state in sync with external initialValues updates (e.g. URL query param changes)
+  useEffect(() => {
+    if (initialValues.origin) setOrigin(initialValues.origin);
+    if (initialValues.destination) setDestination(initialValues.destination);
+    if (initialValues.date) setDepartureDate(initialValues.date);
+    if (initialValues.adults !== undefined) {
+      const parsedAdults = Number(initialValues.adults);
+      if (!isNaN(parsedAdults) && parsedAdults >= 1) {
+        setAdults(parsedAdults);
+      }
+    }
+    if (initialValues.children !== undefined) {
+      const parsedChildren = Number(initialValues.children);
+      if (!isNaN(parsedChildren) && parsedChildren >= 0) {
+        setChildren(parsedChildren);
+      }
+    }
+  }, [initialValues.origin, initialValues.destination, initialValues.date, initialValues.adults, initialValues.children]);
+
+  // Click outside listener for the passenger selector dropdown (desktop and mobile)
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (passengerDropdownRef.current && !passengerDropdownRef.current.contains(event.target)) {
+        setPassengerDropdownOpen(false);
+      }
+    };
+
+    if (passengerDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [passengerDropdownOpen]);
+
+  // Fetch airports catalog
   useEffect(() => {
     const fetchAirports = async () => {
       try {
@@ -64,6 +112,28 @@ const SearchForm = ({ initialValues = {}, className = '', compact = false }) => 
     };
     fetchAirports();
   }, []);
+
+  const totalPassengers = adults + children;
+
+  // Passenger adjustment handlers with strict bounds
+  // Min adults: 1, Min children: 0, Max total: 9, No negative values
+  const handleAdultsChange = (delta) => {
+    setAdults((prevAdults) => {
+      const next = prevAdults + delta;
+      if (next < 1) return 1;
+      if (next + children > 9) return prevAdults;
+      return next;
+    });
+  };
+
+  const handleChildrenChange = (delta) => {
+    setChildren((prevChildren) => {
+      const next = prevChildren + delta;
+      if (next < 0) return 0;
+      if (adults + next > 9) return prevChildren;
+      return next;
+    });
+  };
 
   const handleSwap = () => {
     const temp = origin;
@@ -101,8 +171,6 @@ const SearchForm = ({ initialValues = {}, className = '', compact = false }) => 
 
     navigate(`/search?${params.toString()}`);
   };
-
-  const totalPassengers = adults + children;
 
   return (
     <form onSubmit={handleSubmit} className={`relative ${className}`}>
@@ -181,17 +249,28 @@ const SearchForm = ({ initialValues = {}, className = '', compact = false }) => 
               min={todayStr}
               onChange={(e) => setDepartureDate(e.target.value)}
               className="w-full bg-transparent font-semibold text-navy text-sm focus:outline-none cursor-pointer"
-            />
+            >
+            </input>
           </div>
         </div>
 
-        {/* Passengers */}
-        <div className="md:col-span-3 relative">
+        {/* Passengers Dropdown Selector */}
+        <div className="md:col-span-3 relative" ref={passengerDropdownRef}>
           <div
-            onClick={() => setPassengerDropdownOpen(!passengerDropdownOpen)}
-            className="bg-white p-3 rounded-2xl border border-slate-200 hover:border-skyblue cursor-pointer transition shadow-xs"
+            role="button"
+            tabIndex={0}
+            onClick={() => setPassengerDropdownOpen((prev) => !prev)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setPassengerDropdownOpen((prev) => !prev);
+              }
+            }}
+            className={`bg-white p-3 rounded-2xl border cursor-pointer transition shadow-xs select-none ${
+              passengerDropdownOpen ? 'border-skyblue ring-2 ring-skyblue/20' : 'border-slate-200 hover:border-skyblue'
+            }`}
           >
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1 cursor-pointer">
               Passengers
             </label>
             <div className="flex items-center gap-2">
@@ -203,8 +282,12 @@ const SearchForm = ({ initialValues = {}, className = '', compact = false }) => 
           </div>
 
           {passengerDropdownOpen && (
-            <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-slate-100 p-4 z-50 animate-scaleUp transform origin-top-right">
-              <div className="flex items-center justify-between py-2 border-b border-slate-100">
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="absolute top-full right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-slate-100 p-4 z-50 animate-scaleUp transform origin-top-right select-none"
+            >
+              {/* Adults (+/-) */}
+              <div className="flex items-center justify-between py-2.5 border-b border-slate-100">
                 <div>
                   <p className="text-sm font-bold text-navy">Adults</p>
                   <p className="text-xs text-slate-400">Age 12+</p>
@@ -212,25 +295,28 @@ const SearchForm = ({ initialValues = {}, className = '', compact = false }) => 
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => setAdults(Math.max(1, adults - 1))}
-                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold text-navy flex items-center justify-center disabled:opacity-40 active:scale-90 transition-transform"
+                    aria-label="Decrease Adults"
+                    onClick={() => handleAdultsChange(-1)}
                     disabled={adults <= 1}
+                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold text-navy flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed active:scale-90 transition-all cursor-pointer touch-manipulation"
                   >
                     -
                   </button>
                   <span className="w-6 text-center font-bold text-navy text-sm">{adults}</span>
                   <button
                     type="button"
-                    onClick={() => setAdults(Math.min(9, adults + 1))}
-                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold text-navy flex items-center justify-center disabled:opacity-40 active:scale-90 transition-transform"
-                    disabled={adults + children >= 9}
+                    aria-label="Increase Adults"
+                    onClick={() => handleAdultsChange(1)}
+                    disabled={totalPassengers >= 9}
+                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold text-navy flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed active:scale-90 transition-all cursor-pointer touch-manipulation"
                   >
                     +
                   </button>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between py-2 border-b border-slate-100">
+              {/* Children (+/-) */}
+              <div className="flex items-center justify-between py-2.5 border-b border-slate-100">
                 <div>
                   <p className="text-sm font-bold text-navy">Children</p>
                   <p className="text-xs text-slate-400">Age 2 - 11</p>
@@ -238,28 +324,38 @@ const SearchForm = ({ initialValues = {}, className = '', compact = false }) => 
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => setChildren(Math.max(0, children - 1))}
-                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold text-navy flex items-center justify-center disabled:opacity-40 active:scale-90 transition-transform"
+                    aria-label="Decrease Children"
+                    onClick={() => handleChildrenChange(-1)}
                     disabled={children <= 0}
+                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold text-navy flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed active:scale-90 transition-all cursor-pointer touch-manipulation"
                   >
                     -
                   </button>
                   <span className="w-6 text-center font-bold text-navy text-sm">{children}</span>
                   <button
                     type="button"
-                    onClick={() => setChildren(Math.min(6, children + 1))}
-                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold text-navy flex items-center justify-center disabled:opacity-40 active:scale-90 transition-transform"
-                    disabled={adults + children >= 9}
+                    aria-label="Increase Children"
+                    onClick={() => handleChildrenChange(1)}
+                    disabled={totalPassengers >= 9}
+                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold text-navy flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed active:scale-90 transition-all cursor-pointer touch-manipulation"
                   >
                     +
                   </button>
                 </div>
               </div>
 
+              {/* Max Passengers Limit Notice */}
+              {totalPassengers >= 9 && (
+                <p className="text-[11px] font-semibold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-lg mt-2.5 text-center border border-amber-200/60">
+                  Maximum 9 travelers per booking reached
+                </p>
+              )}
+
+              {/* Done Button */}
               <button
                 type="button"
                 onClick={() => setPassengerDropdownOpen(false)}
-                className="mt-3 w-full py-2 text-xs font-bold text-white bg-navy hover:bg-skyblue rounded-xl shadow-xs transition active:scale-95 cursor-pointer"
+                className="mt-3.5 w-full py-2.5 text-xs font-bold text-white bg-navy hover:bg-skyblue rounded-xl shadow-xs transition active:scale-95 cursor-pointer"
               >
                 Done
               </button>

@@ -39,8 +39,8 @@ const PassengerDetails = () => {
   }, [initialFlight, navigate]);
 
   const selectedSeats = location.state?.selectedSeats || [];
-  const adultsCount = location.state?.adults || 1;
-  const childrenCount = location.state?.children || 0;
+  const adultsCount = Number(location.state?.adults) || 1;
+  const childrenCount = Number(location.state?.children) || 0;
   const totalPassengers = adultsCount + childrenCount;
 
   // Initialize passenger array with Aadhaar and DOB
@@ -198,6 +198,8 @@ const PassengerDetails = () => {
       promoCode: promoApplied ? promoCode : null,
       adultFare,
       childFare,
+      adultCount: currentAdults,
+      childCount: currentChildren,
       baseFare: baseTotal,
       taxAmount: taxes,
       discountAmount,
