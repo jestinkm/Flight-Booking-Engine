@@ -8,6 +8,7 @@ const User = require('../models/User');
 const { allocateSeats } = require('./seatAllocationService');
 const { applyOffer, validateOffer, calculateDiscount } = require('./offerService');
 const { createNotification, sendBookingConfirmationEmail } = require('./notificationService');
+const { sendPushToUser } = require('./pushService');
 
 /**
  * Creates a PENDING booking record with passengers and fare calculation
@@ -303,6 +304,13 @@ const confirmBooking = async ({ bookingId, paymentMethod = 'DEMO_CARD', demoCard
         customEmail: customerEmail || undefined
       });
       console.log(`[Payment Confirmed] E-Ticket email outcome:`, emailOutcome);
+
+      // Automatically dispatch browser Web Push notification to customer's devices
+      sendPushToUser(confirmedBooking.userId, {
+        title: 'SKYNEXA — Booking Confirmed! ✈️',
+        body: `Booking ${confirmedBooking.bookingReference} confirmed. Your official e-ticket is issued and ready.`,
+        url: `/booking-success/${confirmedBooking._id}`
+      }).catch((pErr) => console.debug('[Push Dispatch Notice]:', pErr.message));
     } catch (notifErr) {
       console.error('Error in post-booking email/notification dispatch:', notifErr.message);
       // Requirement 7: Temporary email failure does not cancel confirmed booking

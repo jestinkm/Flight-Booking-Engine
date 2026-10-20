@@ -1,6 +1,7 @@
 import React from 'react';
 import { Bell, CheckCheck, Plane, Tag, ShieldCheck, Clock, Ticket } from 'lucide-react';
 import { useNotifications } from '../context/NotificationContext';
+import EnablePushNotifications from '../components/EnablePushNotifications';
 
 const Notifications = () => {
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
@@ -42,6 +43,9 @@ const Notifications = () => {
             </button>
           )}
         </div>
+
+        {/* Browser Web Push Notifications Toggle */}
+        <EnablePushNotifications />
 
         {displayList.length > 0 ? (
           <div className="space-y-3">

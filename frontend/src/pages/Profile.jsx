@@ -4,6 +4,7 @@ import { User, ShieldCheck, Ticket, CreditCard, Bell, HelpCircle, Lock, LogOut, 
 import { useAuth } from '../context/AuthContext';
 import api from '../lib/axios';
 import toast from 'react-hot-toast';
+import EnablePushNotifications from '../components/EnablePushNotifications';
 
 const Profile = () => {
   const { user, updateUser, logout } = useAuth();
@@ -301,61 +302,67 @@ const Profile = () => {
             )}
 
             {activeSection === 'SECURITY' && (
-              <form onSubmit={handleChangePassword} className="space-y-6">
-                <div className="border-b border-slate-100 pb-4">
-                  <h2 className="text-xl font-black text-navy">Change Password</h2>
-                  <p className="text-xs text-slate-500">
-                    Ensure your account is using a strong, unique password.
-                  </p>
+              <div className="space-y-8">
+                <form onSubmit={handleChangePassword} className="space-y-6">
+                  <div className="border-b border-slate-100 pb-4">
+                    <h2 className="text-xl font-black text-navy">Change Password</h2>
+                    <p className="text-xs text-slate-500">
+                      Ensure your account is using a strong, unique password.
+                    </p>
+                  </div>
+
+                  <div className="space-y-4 max-w-md">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-600 mb-1">Current Password</label>
+                      <input
+                        type="password"
+                        required
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium focus:outline-none focus:border-skyblue"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-600 mb-1">New Password</label>
+                      <input
+                        type="password"
+                        required
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium focus:outline-none focus:border-skyblue"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-600 mb-1">Confirm New Password</label>
+                      <input
+                        type="password"
+                        required
+                        value={confirmNewPassword}
+                        onChange={(e) => setConfirmNewPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium focus:outline-none focus:border-skyblue"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={updatingPassword}
+                    className="px-6 py-3 bg-navy hover:bg-navy-800 text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    <Lock className="w-4 h-4" />
+                    <span>{updatingPassword ? 'Updating...' : 'Update Password'}</span>
+                  </button>
+                </form>
+
+                <div className="pt-6 border-t border-slate-100">
+                  <EnablePushNotifications />
                 </div>
-
-                <div className="space-y-4 max-w-md">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-600 mb-1">Current Password</label>
-                    <input
-                      type="password"
-                      required
-                      value={currentPassword}
-                      onChange={(e) => setCurrentPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium focus:outline-none focus:border-skyblue"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-600 mb-1">New Password</label>
-                    <input
-                      type="password"
-                      required
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium focus:outline-none focus:border-skyblue"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-600 mb-1">Confirm New Password</label>
-                    <input
-                      type="password"
-                      required
-                      value={confirmNewPassword}
-                      onChange={(e) => setConfirmNewPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium focus:outline-none focus:border-skyblue"
-                    />
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={updatingPassword}
-                  className="px-6 py-3 bg-navy hover:bg-navy-800 text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
-                >
-                  <Lock className="w-4 h-4" />
-                  <span>{updatingPassword ? 'Updating...' : 'Update Password'}</span>
-                </button>
-              </form>
+              </div>
             )}
           </div>
         </div>

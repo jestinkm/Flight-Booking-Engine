@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import api from '../lib/axios';
 import { useAuth } from './AuthContext';
+import { registerServiceWorker } from '../lib/pushNotifications';
 
 const NotificationContext = createContext(null);
 
@@ -43,6 +44,7 @@ export const NotificationProvider = ({ children }) => {
 
   useEffect(() => {
     fetchNotifications();
+    registerServiceWorker();
   }, [fetchNotifications]);
 
   const markAsRead = async (notificationId) => {
