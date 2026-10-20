@@ -124,6 +124,10 @@ const bookingSchema = new mongoose.Schema(
       type: Date,
       default: null
     },
+    emailDeliveredTo: {
+      type: String,
+      default: null
+    },
     emailDeliveryId: {
       type: String,
       default: null

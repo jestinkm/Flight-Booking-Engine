@@ -9,6 +9,7 @@ require('../models/Airport');
 require('../models/Flight');
 require('../models/FlightInstance');
 require('../models/AircraftLayout');
+require('../models/Offer');
 
 let resendClient = null;
 const getResendClient = () => {
@@ -123,6 +124,45 @@ const sendEmailWithRetry = async (to, subject, html, maxRetries = 3) => {
 
       // If sandbox domain restriction or validation error, retrying the exact same address won't succeed
       if (res.error && (res.error.includes('only send testing emails') || res.error.includes('validation_error'))) {
+        const match = res.error.match(/own email address \(([^)]+)\)/i);
+        const testOwnerEmail = (match ? match[1] : null) || process.env.RESEND_TEST_EMAIL || 'kmjestin25@gmail.com';
+
+        if (testOwnerEmail && testOwnerEmail.toLowerCase() !== to.toLowerCase()) {
+          console.log(`[Resend Sandbox Gateway] Intended recipient "${to}" is not a verified Resend domain. Forwarding dispatch to verified owner inbox "${testOwnerEmail}"...`);
+          const sandboxSubject = `✈️ [Passenger: ${to}] ${subject}`;
+          const sandboxBanner = `
+            <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:12px; padding:16px; margin-bottom:20px; font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;">
+              <div style="font-weight:bold; color:#1e40af; font-size:14px; margin-bottom:4px;">
+                ✈️ SKYNEXA Sandbox Mode Dispatch
+              </div>
+              <p style="color:#1e3a8a; font-size:12px; margin:0; line-height:1.5;">
+                This official E-Ticket was generated for passenger contact: <strong>${to}</strong>.<br/>
+                Delivered to verified account inbox (<strong>${testOwnerEmail}</strong>) in compliance with Resend sandbox testing rules.
+              </p>
+            </div>
+          `;
+          const sandboxHtml = html.includes('<body>')
+            ? html.replace(/<body[^>]*>/i, `$&${sandboxBanner}`)
+            : `${sandboxBanner}${html}`;
+
+          try {
+            const fallbackRes = await sendEmail(testOwnerEmail, sandboxSubject, sandboxHtml);
+            if (fallbackRes.success) {
+              console.log(`[Resend Sandbox Gateway] ✅ E-Ticket delivered to ${testOwnerEmail} for passenger ${to} (ID: ${fallbackRes.data?.id})`);
+              return {
+                success: true,
+                data: fallbackRes.data,
+                isSandboxDelivered: true,
+                targetEmail: to,
+                deliveredTo: testOwnerEmail,
+                attempts: attempt
+              };
+            }
+          } catch (fbErr) {
+            console.warn('[Resend Sandbox Fallback Exception]:', fbErr.message);
+          }
+        }
+
         return {
           success: false,
           error: res.error,
@@ -558,13 +598,14 @@ const sendBookingConfirmationEmail = async (targetOrBooking, bookingArg = null, 
           $set: {
             emailSent: true,
             emailSentAt: new Date(),
-            emailDeliveryId: sendResult.data?.id || 'resend-delivered',
+            emailDeliveredTo: sendResult.deliveredTo || resolvedEmail,
+            emailDeliveryId: sendResult.data?.id || (sendResult.isSandboxDelivered ? 'sandbox-delivered' : 'resend-delivered'),
             emailDeliveryError: null,
             lastEmailAttemptAt: new Date()
           },
           $inc: { emailAttempts: 1 }
         });
-        console.log(`[Email Service] ✅ E-Ticket dispatched successfully to ${resolvedEmail} for PNR ${booking.bookingReference} (Delivery ID: ${sendResult.data?.id})`);
+        console.log(`[Email Service] ✅ E-Ticket dispatched successfully to ${sendResult.deliveredTo || resolvedEmail} for PNR ${booking.bookingReference} (Delivery ID: ${sendResult.data?.id})`);
       } else {
         await Booking.findByIdAndUpdate(booking._id, {
           $set: {
@@ -581,6 +622,8 @@ const sendBookingConfirmationEmail = async (targetOrBooking, bookingArg = null, 
     return {
       success: sendResult.success,
       deliveryId: sendResult.data?.id || null,
+      isSandboxDelivered: Boolean(sendResult.isSandboxDelivered),
+      deliveredTo: sendResult.deliveredTo || resolvedEmail,
       error: sendResult.error || null,
       targetEmail: resolvedEmail,
       bookingReference: booking.bookingReference

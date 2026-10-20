@@ -451,7 +451,9 @@ const resendETicket = async (req, res, next) => {
     if (emailOutcome.success) {
       res.json({
         success: true,
-        message: `Official E-Ticket has been successfully dispatched to ${emailOutcome.targetEmail}`,
+        message: emailOutcome.isSandboxDelivered
+          ? `Official E-Ticket dispatched! (Delivered to developer inbox ${emailOutcome.deliveredTo} in testing mode for passenger ${targetEmail})`
+          : `Official E-Ticket has been successfully dispatched to ${emailOutcome.targetEmail || targetEmail}`,
         data: emailOutcome
       });
     } else {

@@ -288,7 +288,8 @@ const BookingSuccess = () => {
           ...(prev || booking),
           emailSent: true,
           emailDeliveryError: null,
-          contactEmail: email
+          contactEmail: email,
+          emailDeliveredTo: res.data?.data?.deliveredTo || email
         }));
         setCustomEmailModal(false);
         toast.success(res.data?.message || `Official E-Ticket sent to ${email}!`);
@@ -601,10 +602,17 @@ const BookingSuccess = () => {
                         </div>
                       </div>
                     ) : (
-                      <div className="mt-2.5 p-2 rounded-xl bg-emerald-50/80 border border-emerald-200 text-[11px] text-emerald-800 leading-normal flex items-center gap-1.5">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                        <span>Confirmed copy dispatched to your inbox. Please check spam/promotions folder if not visible immediately.</span>
-                      </div>
+                      <>
+                        <div className="mt-2.5 p-2 rounded-xl bg-emerald-50/80 border border-emerald-200 text-[11px] text-emerald-800 leading-normal flex items-center gap-1.5">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span>Confirmed copy dispatched to your inbox. Please check spam/promotions folder if not visible immediately.</span>
+                        </div>
+                        {booking.emailDeliveredTo && booking.emailDeliveredTo !== (booking.contactEmail || targetEmail || user?.email) && (
+                          <p className="text-[10px] text-sky-700 font-medium mt-1">
+                            Note: Dispatched via testing gateway to <strong className="font-mono text-navy">{booking.emailDeliveredTo}</strong> on behalf of passenger.
+                          </p>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
