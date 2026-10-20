@@ -81,8 +81,8 @@ const BookingSuccess = () => {
   }, [bookingId]);
 
   useEffect(() => {
-    const tickTimer = setTimeout(() => setShowFullScreenTick(false), 2600);
-    const confettiTimer = setTimeout(() => setShowConfetti(false), 5500);
+    const tickTimer = setTimeout(() => setShowFullScreenTick(false), 3600);
+    const confettiTimer = setTimeout(() => setShowConfetti(false), 6000);
     return () => {
       clearTimeout(tickTimer);
       clearTimeout(confettiTimer);
@@ -90,8 +90,8 @@ const BookingSuccess = () => {
   }, []);
 
   const handleReplayChime = () => {
-    celebrateBookingSuccess();
-    toast.success('Airline cabin chime & haptic triggered!', { icon: '🔔' });
+    celebrateBookingSuccess(true);
+    toast.success('Two-tone airline chime played!', { icon: '🔔' });
   };
 
   // Merge state-based and backend-fetched booking data
@@ -220,6 +220,9 @@ const BookingSuccess = () => {
             seatNumber: '1A'
           }
         ];
+
+  const primaryPassenger = passengerList[0] || {};
+  const primaryPassengerName = `${primaryPassenger.firstName || user?.firstName || 'Valued'} ${primaryPassenger.lastName || user?.lastName || 'Passenger'}`.trim();
 
   const seats = (
     rawSeats.length > 0
@@ -368,7 +371,7 @@ const BookingSuccess = () => {
                 <Sparkles className="w-3.5 h-3.5" /> Booking Confirmed &amp; Seats Allocated
               </div>
               <h1 className="text-3xl sm:text-4xl font-black text-navy tracking-tight">
-                Booking Confirmed
+                Booking Confirmed Successfully!
               </h1>
               <p className="text-sm text-slate-500 font-medium max-w-md mx-auto">
                 Your flight is confirmed and your tickets are issued. A confirmation copy has been dispatched to your email.
@@ -476,6 +479,76 @@ const BookingSuccess = () => {
           </div>
 
           <div className="p-6 sm:p-8 space-y-6">
+            {/* Executive Flight Confirmation Summary */}
+            {isConfirmed && (
+              <div className="bg-gradient-to-br from-sky-50/80 via-white to-blue-50/50 rounded-3xl p-5 sm:p-6 border-2 border-sky-100/90 shadow-sm space-y-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-navy text-skyblue flex items-center justify-center font-bold shadow-xs">
+                      <Plane className="w-5 h-5 rotate-45" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Passenger Name</p>
+                      <p className="text-base sm:text-lg font-black text-navy">{primaryPassengerName}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 sm:text-right">Payment Status</p>
+                      <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-800 border border-emerald-300 uppercase tracking-wider shadow-2xs">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                        SUCCESSFUL
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+                  <div>
+                    <span className="text-slate-400 text-[10px] font-bold block uppercase tracking-wider mb-0.5">Booking Reference (PNR)</span>
+                    <span className="font-mono font-black text-sm sm:text-base text-navy">{bookingRef}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 text-[10px] font-bold block uppercase tracking-wider mb-0.5">Flight Number</span>
+                    <span className="font-mono font-black text-sm sm:text-base text-skyblue">{flightNumber}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 text-[10px] font-bold block uppercase tracking-wider mb-0.5">Departure &amp; Destination</span>
+                    <span className="font-black text-sm text-navy">{originCode} ➔ {destCode}</span>
+                    <span className="text-[10px] text-slate-500 block truncate">{originCity} to {destCity}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 text-[10px] font-bold block uppercase tracking-wider mb-0.5">Travel Date &amp; Time</span>
+                    <span className="font-black text-sm text-navy">{travelDateFormatted}</span>
+                    <span className="text-[10px] text-slate-500 block font-semibold">{depTimeFormatted}</span>
+                  </div>
+                </div>
+
+                {/* Two Animated Buttons */}
+                <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handlePrintTicket}
+                    className="relative group w-full sm:w-auto flex-1 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2.5 cursor-pointer transform hover:-translate-y-0.5 active:translate-y-0 hover:scale-[1.02] ring-2 ring-emerald-400/20 overflow-hidden"
+                  >
+                    <span className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none" />
+                    <Download className="w-4 h-4 text-white animate-bounce" />
+                    <span>Download E-Ticket</span>
+                  </button>
+
+                  <Link
+                    to="/my-bookings"
+                    className="relative group w-full sm:w-auto flex-1 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-navy via-navy-800 to-[#007BFF] hover:from-[#007BFF] hover:to-navy text-white font-extrabold text-xs shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2.5 cursor-pointer transform hover:-translate-y-0.5 active:translate-y-0 hover:scale-[1.02] ring-2 ring-sky-400/20 overflow-hidden"
+                  >
+                    <span className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none" />
+                    <span>View My Bookings</span>
+                    <ArrowRight className="w-4 h-4 text-sky-300 transition-transform duration-200 group-hover:translate-x-1" />
+                  </Link>
+                </div>
+              </div>
+            )}
+
             {/* E-Ticket Email Delivery Banner */}
             {isConfirmed && (
               <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-sky-50 via-blue-50 to-emerald-50 border border-sky-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">

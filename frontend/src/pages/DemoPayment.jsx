@@ -4,7 +4,6 @@ import { CreditCard, QrCode, AlertTriangle, ShieldCheck, CheckCircle2, Lock, Arr
 import api from '../lib/axios';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
-import { celebrateBookingSuccess } from '../lib/soundEffects';
 
 const DemoPayment = () => {
   const location = useLocation();
@@ -51,10 +50,8 @@ const DemoPayment = () => {
       const confirmedBookingData = res.data?.booking || res.data?.data?.booking || res.data?.data;
       const confirmedPaymentData = res.data?.payment || res.data?.data?.payment;
 
-      // Trigger instant tactile vibration and luxury airline chime
-      celebrateBookingSuccess();
-
-      toast.success('Payment authorized & e-ticket dispatched to your email!');
+      // Backend payment authorized & verified
+      toast.success('Payment authorized! Confirming your booking...');
       
       const finalRef =
         confirmedBookingData?.bookingReference ||
