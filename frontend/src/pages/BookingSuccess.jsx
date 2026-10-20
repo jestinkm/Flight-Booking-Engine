@@ -20,12 +20,18 @@ import {
   CreditCard,
   Hash,
   ArrowLeft,
-  Download
+  Download,
+  Volume2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import api from '../lib/axios';
 import BookingConfirmationAnimation from '../components/BookingConfirmationAnimation';
+import {
+  celebrateBookingSuccess,
+  playBookingSuccessSound,
+  triggerBookingSuccessVibration
+} from '../lib/soundEffects';
 
 const BookingSuccess = () => {
   const { bookingId } = useParams();
@@ -75,13 +81,18 @@ const BookingSuccess = () => {
   }, [bookingId]);
 
   useEffect(() => {
-    const tickTimer = setTimeout(() => setShowFullScreenTick(false), 4500);
-    const confettiTimer = setTimeout(() => setShowConfetti(false), 7000);
+    const tickTimer = setTimeout(() => setShowFullScreenTick(false), 2600);
+    const confettiTimer = setTimeout(() => setShowConfetti(false), 5500);
     return () => {
       clearTimeout(tickTimer);
       clearTimeout(confettiTimer);
     };
   }, []);
+
+  const handleReplayChime = () => {
+    celebrateBookingSuccess();
+    toast.success('Airline cabin chime & haptic triggered!', { icon: '🔔' });
+  };
 
   // Merge state-based and backend-fetched booking data
   const booking = fetchedBooking || location.state?.booking || {
@@ -362,6 +373,16 @@ const BookingSuccess = () => {
               <p className="text-sm text-slate-500 font-medium max-w-md mx-auto">
                 Your flight is confirmed and your tickets are issued. A confirmation copy has been dispatched to your email.
               </p>
+              <div className="pt-2 flex items-center justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleReplayChime}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white hover:bg-sky-50 text-navy hover:text-skyblue border border-slate-200 text-xs font-bold shadow-xs transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
+                >
+                  <Volume2 className="w-3.5 h-3.5 text-skyblue animate-pulse" />
+                  <span>Replay Airline Chime &amp; Haptic</span>
+                </button>
+              </div>
             </>
           ) : isPending ? (
             <>

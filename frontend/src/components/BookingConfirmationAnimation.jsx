@@ -1,22 +1,31 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight, Sparkles, Volume2, BellRing } from 'lucide-react';
+import { celebrateBookingSuccess, playBookingSuccessSound, triggerBookingSuccessVibration } from '../lib/soundEffects';
 
 const BookingConfirmationAnimation = ({ onComplete }) => {
   const [phase, setPhase] = useState('tick'); // 'tick' -> 'flight' -> 'fadeout'
+  const [soundActive, setSoundActive] = useState(true);
 
   useEffect(() => {
-    // 1.8s: Transition from central blue tick to climbing airplane takeoff
+    // Immediately fire luxury airline cabin chime and haptic vibration pattern
+    try {
+      celebrateBookingSuccess();
+    } catch (e) {
+      console.debug('Audio/Haptic celebration auto-trigger:', e);
+    }
+
+    // 0.9s: Rapid smooth transition from central blue tick to climbing airplane takeoff
     const flightTimer = setTimeout(() => {
       setPhase('flight');
-    }, 1800);
+    }, 900);
 
-    // 4.3s: Trigger fadeout and reveal the confirmation card
+    // 2.3s: Trigger fadeout and reveal the confirmation card instantly
     const completeTimer = setTimeout(() => {
       setPhase('fadeout');
       setTimeout(() => {
         if (onComplete) onComplete();
-      }, 500);
-    }, 4300);
+      }, 250);
+    }, 2300);
 
     return () => {
       clearTimeout(flightTimer);
@@ -28,7 +37,13 @@ const BookingConfirmationAnimation = ({ onComplete }) => {
     setPhase('fadeout');
     setTimeout(() => {
       if (onComplete) onComplete();
-    }, 300);
+    }, 150);
+  };
+
+  const handleReplayChime = (e) => {
+    e.stopPropagation();
+    setSoundActive(true);
+    celebrateBookingSuccess();
   };
 
   return (
@@ -36,7 +51,7 @@ const BookingConfirmationAnimation = ({ onComplete }) => {
       role="dialog"
       aria-modal="true"
       aria-label="Flight Booking Confirmed"
-      className={`fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden transition-opacity duration-500 select-none ${
+      className={`fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden transition-opacity duration-300 select-none ${
         phase === 'fadeout' ? 'opacity-0 pointer-events-none' : 'opacity-100'
       }`}
     >
@@ -150,7 +165,7 @@ const BookingConfirmationAnimation = ({ onComplete }) => {
       {/* 1. Background Sky-Blue Transition Canvas */}
       <div
         className="absolute inset-0 pointer-events-none"
-        style={{ animation: 'skyGradientShift 2.5s ease-out forwards' }}
+        style={{ animation: 'skyGradientShift 1.5s ease-out forwards' }}
       >
         {/* Soft Radial Sky-Blue Glows */}
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-sky-400/20 rounded-full blur-3xl pointer-events-none animate-pulseSubtle" />
@@ -161,15 +176,15 @@ const BookingConfirmationAnimation = ({ onComplete }) => {
       <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-25">
         <div
           className="absolute -top-40 left-10 w-96 h-36 bg-white/20 rounded-full blur-2xl"
-          style={{ animation: 'cloudsDescend 6s linear infinite' }}
+          style={{ animation: 'cloudsDescend 4s linear infinite' }}
         />
         <div
           className="absolute -top-32 right-12 w-[420px] h-40 bg-sky-200/20 rounded-full blur-3xl"
-          style={{ animation: 'cloudsDescend 5s linear infinite 1.5s' }}
+          style={{ animation: 'cloudsDescend 3.5s linear infinite 0.8s' }}
         />
         <div
           className="absolute -top-60 left-1/3 w-[500px] h-48 bg-white/15 rounded-full blur-3xl"
-          style={{ animation: 'cloudsDescend 7s linear infinite 3s' }}
+          style={{ animation: 'cloudsDescend 4.5s linear infinite 1.5s' }}
         />
       </div>
 
@@ -179,8 +194,8 @@ const BookingConfirmationAnimation = ({ onComplete }) => {
           const colors = ['#38BDF8', '#007BFF', '#BAE6FD', '#FDE047', '#60A5FA'];
           const color = colors[i % colors.length];
           const leftPercent = (i * 4.2) % 100;
-          const duration = 3.5 + (i % 3);
-          const delay = (i * 0.18) % 2;
+          const duration = 2.4 + (i % 2);
+          const delay = (i * 0.1) % 1.2;
           const size = 6 + (i % 5);
           return (
             <div
@@ -199,9 +214,22 @@ const BookingConfirmationAnimation = ({ onComplete }) => {
         })}
       </div>
 
+      {/* Sound & Haptic Indicator Pill */}
+      <div className="absolute top-6 right-6 z-40">
+        <button
+          type="button"
+          onClick={handleReplayChime}
+          title="Replay Cabin Chime & Haptic Vibration"
+          className="px-3.5 py-1.5 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/25 text-white text-xs font-bold transition flex items-center gap-2 shadow-lg cursor-pointer hover:scale-105 active:scale-95"
+        >
+          <Volume2 className="w-3.5 h-3.5 text-sky-300 animate-pulse" />
+          <span>Cabin Chime Active</span>
+        </button>
+      </div>
+
       {/* 4. Sequence Part 1: Large Blue Tick (✓) & Confirmation Typography */}
       <div
-        className={`relative z-20 flex flex-col items-center max-w-lg w-full px-6 text-center transition-all duration-700 ${
+        className={`relative z-20 flex flex-col items-center max-w-lg w-full px-6 text-center transition-all duration-500 ${
           phase === 'tick'
             ? 'opacity-100 scale-100'
             : 'opacity-40 scale-95 pointer-events-none'
@@ -210,13 +238,13 @@ const BookingConfirmationAnimation = ({ onComplete }) => {
         {/* Large Blue Tick Circle */}
         <div className="relative flex items-center justify-center my-6">
           {/* Pulsing Backlight Wave */}
-          <div className="absolute w-48 h-48 rounded-full bg-sky-400/20 animate-ping" />
-          <div className="absolute w-36 h-36 rounded-full bg-blue-500/25 animate-pulse" />
+          <div className="absolute w-44 h-44 rounded-full bg-sky-400/20 animate-ping" />
+          <div className="absolute w-32 h-32 rounded-full bg-blue-500/25 animate-pulse" />
 
           {/* Glowing Center Badge */}
           <div
             className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-gradient-to-tr from-[#0062cc] via-[#007BFF] to-[#38BDF8] flex items-center justify-center ring-8 ring-sky-300/30"
-            style={{ animation: 'tickCircleGlow 2.5s ease-out forwards' }}
+            style={{ animation: 'tickCircleGlow 1.5s ease-out forwards' }}
           >
             <svg className="w-18 h-18 sm:w-20 sm:h-20 text-white drop-shadow-lg" viewBox="0 0 52 52">
               <circle
@@ -236,7 +264,7 @@ const BookingConfirmationAnimation = ({ onComplete }) => {
                 strokeDasharray="100"
                 strokeDashoffset="0"
                 d="M14 27l8 8 16-16"
-                style={{ animation: 'drawBlueTick 1.1s cubic-bezier(0.65, 0, 0.45, 1) forwards' }}
+                style={{ animation: 'drawBlueTick 0.7s cubic-bezier(0.65, 0, 0.45, 1) forwards' }}
               />
             </svg>
           </div>
@@ -264,7 +292,7 @@ const BookingConfirmationAnimation = ({ onComplete }) => {
         <div
           className="absolute left-1/2 bottom-0 z-30 pointer-events-none will-change-transform"
           style={{
-            animation: 'airplaneAscent 2.6s cubic-bezier(0.22, 1, 0.36, 1) forwards'
+            animation: 'airplaneAscent 1.6s cubic-bezier(0.22, 1, 0.36, 1) forwards'
           }}
         >
           {/* Dual Luminous Blue Flight Contrails (Behind Jet Engines) */}
@@ -272,12 +300,12 @@ const BookingConfirmationAnimation = ({ onComplete }) => {
             {/* Left Engine Contrail */}
             <div
               className="w-2 rounded-full blur-[1.5px] bg-gradient-to-b from-sky-300 via-sky-400/70 to-transparent shadow-[0_0_15px_rgba(56,189,248,0.9)]"
-              style={{ animation: 'contrailStream 1.8s ease-in-out infinite' }}
+              style={{ animation: 'contrailStream 1.2s ease-in-out infinite' }}
             />
             {/* Right Engine Contrail */}
             <div
               className="w-2 rounded-full blur-[1.5px] bg-gradient-to-b from-sky-300 via-sky-400/70 to-transparent shadow-[0_0_15px_rgba(56,189,248,0.9)]"
-              style={{ animation: 'contrailStream 1.8s ease-in-out infinite 0.1s' }}
+              style={{ animation: 'contrailStream 1.2s ease-in-out infinite 0.1s' }}
             />
           </div>
 
@@ -351,7 +379,7 @@ const BookingConfirmationAnimation = ({ onComplete }) => {
       )}
 
       {/* 6. Quick Skip / Direct View Button at Bottom */}
-      <div className="absolute bottom-8 z-30">
+      <div className="absolute bottom-8 z-30 flex items-center gap-3">
         <button
           type="button"
           onClick={handleSkip}

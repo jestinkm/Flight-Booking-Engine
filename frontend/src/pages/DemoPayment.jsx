@@ -4,6 +4,7 @@ import { CreditCard, QrCode, AlertTriangle, ShieldCheck, CheckCircle2, Lock, Arr
 import api from '../lib/axios';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
+import { celebrateBookingSuccess } from '../lib/soundEffects';
 
 const DemoPayment = () => {
   const location = useLocation();
@@ -50,15 +51,19 @@ const DemoPayment = () => {
       const confirmedBookingData = res.data?.booking || res.data?.data?.booking || res.data?.data;
       const confirmedPaymentData = res.data?.payment || res.data?.data?.payment;
 
+      // Trigger instant tactile vibration and luxury airline chime
+      celebrateBookingSuccess();
+
       toast.success('Payment authorized & e-ticket dispatched to your email!');
+      
+      const finalRef =
+        confirmedBookingData?.bookingReference ||
+        booking.bookingReference ||
+        `SKN-${Math.floor(100000 + Math.random() * 900000)}`;
+
+      const nextId = confirmedBookingData?._id || confirmedBookingData?.id || bookingId;
+
       setTimeout(() => {
-        const finalRef =
-          confirmedBookingData?.bookingReference ||
-          booking.bookingReference ||
-          `SKN-${Math.floor(100000 + Math.random() * 900000)}`;
-
-        const nextId = confirmedBookingData?._id || confirmedBookingData?.id || bookingId;
-
         navigate(`/booking-success/${nextId}`, {
           state: {
             booking: {
@@ -73,7 +78,7 @@ const DemoPayment = () => {
             }
           }
         });
-      }, 700);
+      }, 150);
     } catch (err) {
       console.error('Payment confirmation error:', err);
       toast.error(err.response?.data?.message || 'Payment processing failed. Please retry.');

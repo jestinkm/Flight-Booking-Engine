@@ -4,8 +4,6 @@ import { Toaster } from 'react-hot-toast';
 
 import { AuthProvider } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
-import { LoadingProvider } from './context/LoadingContext';
-import NetworkLoadingOverlay from './components/NetworkLoadingOverlay';
 
 // Components
 import Navbar from './components/Navbar';
@@ -59,11 +57,9 @@ const AppLayout = ({ children }) => {
 function App() {
   return (
     <BrowserRouter>
-      <LoadingProvider>
-        <NetworkLoadingOverlay />
-        <AuthProvider>
-          <NotificationProvider>
-            <Toaster
+      <AuthProvider>
+        <NotificationProvider>
+          <Toaster
             position="top-right"
             toastOptions={{
               duration: 4000,
@@ -220,7 +216,6 @@ function App() {
           </AppLayout>
         </NotificationProvider>
       </AuthProvider>
-      </LoadingProvider>
     </BrowserRouter>
   );
 }
