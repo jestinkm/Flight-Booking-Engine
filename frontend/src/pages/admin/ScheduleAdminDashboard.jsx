@@ -28,13 +28,15 @@ import {
   PlaneTakeoff,
   Ban,
   X,
-  Info
+  Info,
+  Ticket
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Modal from '../../components/Modal';
 import api from '../../lib/axios';
 import toast from 'react-hot-toast';
+import SmartBookingSheet from '../../components/SmartBookingSheet';
 
 const DAY_OPTIONS = [
   { code: 'MON', label: 'Mon' },
@@ -58,6 +60,7 @@ const ScheduleAdminDashboard = () => {
   const [loadingSchedule, setLoadingSchedule] = useState(true);
 
   // Filters & Views
+  const [activeSection, setActiveSection] = useState('SCHEDULES'); // 'SCHEDULES' | 'BOOKINGS'
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState('TABLE'); // 'TABLE' | 'CARDS'
@@ -446,7 +449,40 @@ const ScheduleAdminDashboard = () => {
           </div>
         </div>
 
-        {/* Dual Counters Banner */}
+        {/* Navigation Section Tabs */}
+        <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+          <button
+            type="button"
+            onClick={() => setActiveSection('SCHEDULES')}
+            className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+              activeSection === 'SCHEDULES'
+                ? 'bg-navy text-white shadow-xs'
+                : 'bg-white text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            <Calendar className="w-4 h-4 text-skyblue" />
+            <span>Flight Schedules &amp; Departures</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveSection('BOOKINGS')}
+            className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+              activeSection === 'BOOKINGS'
+                ? 'bg-navy text-white shadow-xs'
+                : 'bg-white text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            <Ticket className="w-4 h-4 text-skyblue" />
+            <span>Smart Flight Booking Sheet &amp; Manifests</span>
+          </button>
+        </div>
+
+        {activeSection === 'BOOKINGS' ? (
+          <SmartBookingSheet />
+        ) : (
+          <>
+            {/* Dual Counters Banner */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Counter 1: Available Flights from Super Admin */}
           <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex items-center justify-between">
@@ -940,6 +976,8 @@ const ScheduleAdminDashboard = () => {
               );
             })}
           </div>
+        )}
+          </>
         )}
       </div>
 

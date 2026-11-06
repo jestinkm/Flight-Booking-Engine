@@ -236,7 +236,13 @@ const PassengerDetails = () => {
       });
     } catch (err) {
       console.error('Booking creation error:', err);
-      toast.error(err.response?.data?.message || 'Failed to initiate booking. Please retry.');
+      const errMsg = err.response?.data?.message || 'Failed to initiate booking. Please retry.';
+      toast.error(errMsg, { duration: 5000 });
+      if (errMsg.toLowerCase().includes('seat') && (errMsg.toLowerCase().includes('reserved') || errMsg.toLowerCase().includes('booked'))) {
+        setTimeout(() => {
+          navigate(-1); // Return to seat selection so traveler can pick an available seat
+        }, 1800);
+      }
     } finally {
       setSubmitting(false);
     }

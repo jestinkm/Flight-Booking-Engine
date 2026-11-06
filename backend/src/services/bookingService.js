@@ -5,7 +5,7 @@ const BookingSeat = require('../models/BookingSeat');
 const FlightInstance = require('../models/FlightInstance');
 const Payment = require('../models/Payment');
 const User = require('../models/User');
-const { allocateSeats } = require('./seatAllocationService');
+const { allocateSeats, lockSeatsForBooking, releaseExpiredSeatLocks } = require('./seatAllocationService');
 const { applyOffer, validateOffer, calculateDiscount } = require('./offerService');
 const { createNotification, sendBookingConfirmationEmail } = require('./notificationService');
 const { sendPushToUser } = require('./pushService');
@@ -71,11 +71,30 @@ const createPendingBooking = async ({
     throw new Error(`Not enough seats available. Available seats: ${flightInstance.availableSeats}`);
   }
 
-  // 2. Calculate fare with 12% tax/fees
+  // 2. Pre-check requested seat availability if seats were selected
+  const preselectedSeats = passengers.filter((p) => p.seatNumber || p.seat).map((p) => (p.seatNumber || p.seat).trim());
+  if (preselectedSeats.length > 0) {
+    await releaseExpiredSeatLocks(flightInstance._id);
+    const seatConflicts = await BookingSeat.find({
+      flightInstanceId: flightInstance._id,
+      seatNumber: { $in: preselectedSeats },
+      $or: [
+        { status: 'ASSIGNED' },
+        { status: 'LOCKED', lockedUntil: { $gt: new Date() }, ...(userId ? { lockedBy: { $ne: userId } } : {}) }
+      ]
+    });
+
+    if (seatConflicts.length > 0) {
+      const conflictList = seatConflicts.map((c) => c.seatNumber).join(', ');
+      throw new Error(`Another user has just reserved seat ${conflictList}. Please refresh and select another available seat.`);
+    }
+  }
+
+  // 3. Calculate fare with 12% tax/fees
   const subtotal = adultCount * flightInstance.adultFare + childCount * flightInstance.childFare;
   const taxAmount = Math.round(subtotal * 0.12);
 
-  // 3. Validate offer if provided
+  // 4. Validate offer if provided
   let offer = null;
   let discountAmount = 0;
   if (offerCode) {
@@ -94,8 +113,12 @@ const createPendingBooking = async ({
 
   const totalAmount = Math.max(0, subtotal + taxAmount - discountAmount);
 
-  // 4. Create pending booking with fare snapshot
+  // 5. Generate collision-resistant unique PNR
+  const bookingReference = await Booking.generateUniquePNR();
+
+  // 6. Create pending booking with fare snapshot
   const booking = await Booking.create({
+    bookingReference,
     userId,
     flightInstanceId: flightInstance._id,
     passengerCount: totalPassengers,
@@ -110,13 +133,13 @@ const createPendingBooking = async ({
     refundAmount: 0,
     offerId: offer ? offer._id : null,
     offerCode: offer ? offer.promoCode : null,
-    ...(idempotencyKey ? { idempotencyKey } : {}),
+    ...(idempotencyKey && idempotencyKey.trim() ? { idempotencyKey: idempotencyKey.trim() } : {}),
     contactEmail: contactEmail || null,
     contactPhone: contactPhone || null,
     status: 'PENDING'
   });
 
-  // 5. Create passenger records
+  // 7. Create passenger records
   const passengerDocs = passengers.map((p) => ({
     bookingId: booking._id,
     firstName: p.firstName.trim(),
@@ -130,6 +153,35 @@ const createPendingBooking = async ({
   }));
 
   const createdPassengers = await BookingPassenger.insertMany(passengerDocs);
+
+  // 8. Temporarily lock pre-selected seats for 5 minutes to prevent concurrent double-booking
+  const seatsToLock = createdPassengers
+    .filter((p) => p.seatNumber)
+    .map((p) => {
+      const lastChar = p.seatNumber.slice(-1).toUpperCase();
+      let pos = 'AISLE';
+      if (lastChar === 'A' || lastChar === 'F') pos = 'WINDOW';
+      else if (lastChar === 'B' || lastChar === 'E') pos = 'MIDDLE';
+      return {
+        passengerId: p._id,
+        seatNumber: p.seatNumber,
+        position: pos
+      };
+    });
+
+  if (seatsToLock.length > 0) {
+    try {
+      await lockSeatsForBooking({
+        flightInstanceId: flightInstance._id,
+        bookingId: booking._id,
+        passengerSeats: seatsToLock,
+        userId,
+        durationMinutes: 5
+      });
+    } catch (lockErr) {
+      console.warn('[BookingService] Notice locking seats:', lockErr.message);
+    }
+  }
 
   return { booking, passengers: createdPassengers, isExisting: false };
 };
@@ -243,7 +295,28 @@ const confirmBooking = async ({ bookingId, paymentMethod = 'DEMO_CARD', demoCard
         });
       }
 
-      await BookingSeat.insertMany(bookingSeatDocs, { session });
+      // Check if any of these seats have already been confirmed by another user
+      const seatNumbersToAssign = bookingSeatDocs.map((s) => s.seatNumber);
+      const existingAssignedConflicts = await BookingSeat.find({
+        flightInstanceId: flightInstance._id,
+        seatNumber: { $in: seatNumbersToAssign },
+        status: 'ASSIGNED',
+        bookingId: { $ne: booking._id }
+      }).session(session);
+
+      if (existingAssignedConflicts.length > 0) {
+        const conflictNames = existingAssignedConflicts.map((c) => c.seatNumber).join(', ');
+        throw new Error(`This seat (${conflictNames}) has already been booked. Please select another seat.`);
+      }
+
+      // Remove any temporary seat locks for this booking
+      await BookingSeat.deleteMany({ bookingId: booking._id, status: 'LOCKED' }).session(session);
+
+      // Verify if seats are already inserted for this booking (idempotent re-submission check)
+      const alreadyAssigned = await BookingSeat.find({ bookingId: booking._id, status: 'ASSIGNED' }).session(session);
+      if (alreadyAssigned.length === 0) {
+        await BookingSeat.insertMany(bookingSeatDocs, { session });
+      }
 
       // 7. If offer used, increment redemption
       if (booking.offerId) {

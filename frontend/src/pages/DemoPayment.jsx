@@ -50,13 +50,13 @@ const DemoPayment = () => {
       const confirmedBookingData = res.data?.booking || res.data?.data?.booking || res.data?.data;
       const confirmedPaymentData = res.data?.payment || res.data?.data?.payment;
 
-      // Backend payment authorized & verified
-      toast.success('Payment authorized! Confirming your booking...');
-      
       const finalRef =
         confirmedBookingData?.bookingReference ||
         booking.bookingReference ||
         `SKN-${Math.floor(100000 + Math.random() * 900000)}`;
+
+      // Backend payment authorized & verified
+      toast.success(`Booking successful! Your PNR is ${finalRef}`);
 
       const nextId = confirmedBookingData?._id || confirmedBookingData?.id || bookingId;
 

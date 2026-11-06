@@ -1,5 +1,6 @@
 import React from 'react';
-import { Armchair, Check, AlertCircle } from 'lucide-react';
+import { Armchair, Check, AlertCircle, Lock, Clock, RefreshCw } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const SeatMapComponent = ({
   layoutType = '3-3',
@@ -8,7 +9,11 @@ const SeatMapComponent = ({
   selectedSeats = [],
   onSeatSelect,
   maxSelectable = 1,
-  readOnly = false
+  readOnly = false,
+  onRefresh = null,
+  isRefreshing = false,
+  lastUpdated = null,
+  stats = null
 }) => {
   // Columns definition based on layout type
   const leftCols = layoutType === '2-2' ? ['A', 'B'] : ['A', 'B', 'C'];
@@ -48,22 +53,28 @@ const SeatMapComponent = ({
     if (seatData) {
       if (seatData.status) return seatData.status.toUpperCase();
       if (seatData.isOccupied || seatData.isAssigned) return 'OCCUPIED';
+      if (seatData.isLocked || seatData.isReserved) return 'LOCKED';
       if (seatData.isBlocked) return 'BLOCKED';
       return 'AVAILABLE';
     }
 
-    // If backend seats were provided, unlisted seats default to AVAILABLE
-    if (seatMap.size > 0) {
-      return 'AVAILABLE';
-    }
-
-    // Fallback only if no seats data was passed at all
     return 'AVAILABLE';
   };
 
   const handleSeatClick = (seatNumber, status) => {
     if (readOnly) return;
-    if (status === 'OCCUPIED' || status === 'ASSIGNED' || status === 'BLOCKED') return;
+    if (status === 'OCCUPIED' || status === 'ASSIGNED') {
+      toast.error(`This seat (${seatNumber}) has already been booked. Please select another seat.`);
+      return;
+    }
+    if (status === 'LOCKED' || status === 'RESERVED') {
+      toast.error(`Another user has temporarily reserved seat ${seatNumber}. Please select another available seat.`);
+      return;
+    }
+    if (status === 'BLOCKED') {
+      toast.error(`Seat ${seatNumber} is blocked by airline operations.`);
+      return;
+    }
 
     if (onSeatSelect) {
       onSeatSelect(seatNumber);
@@ -76,13 +87,16 @@ const SeatMapComponent = ({
     const position = getPositionType(col);
     const isSelected = status === 'SELECTED';
     const isOccupied = status === 'OCCUPIED' || status === 'ASSIGNED';
+    const isLocked = status === 'LOCKED' || status === 'RESERVED';
     const isBlocked = status === 'BLOCKED';
 
     let colorStyles = 'bg-white border-emerald-500 text-emerald-700 hover:bg-emerald-500 hover:text-white hover:scale-110 active:scale-90 hover:shadow-md cursor-pointer shadow-xs';
     if (isSelected) {
       colorStyles = 'bg-skyblue border-skyblue text-white shadow-lg shadow-sky-400/30 scale-105 ring-2 ring-sky-300 ring-offset-1 font-bold animate-scaleUp cursor-pointer';
     } else if (isOccupied) {
-      colorStyles = 'bg-slate-100 border-slate-200 text-slate-300 cursor-not-allowed opacity-60';
+      colorStyles = 'bg-slate-100 border-slate-300 text-slate-400 cursor-not-allowed opacity-75';
+    } else if (isLocked) {
+      colorStyles = 'bg-amber-50 border-amber-300 text-amber-600 cursor-not-allowed opacity-85';
     } else if (isBlocked) {
       colorStyles = 'bg-rose-50 border-rose-200 text-rose-300 cursor-not-allowed opacity-60';
     }
@@ -91,14 +105,24 @@ const SeatMapComponent = ({
       <button
         key={seatNumber}
         type="button"
-        disabled={isOccupied || isBlocked || readOnly}
+        disabled={isBlocked || readOnly}
         onClick={() => handleSeatClick(seatNumber, status)}
-        title={`Seat ${seatNumber} (${position}) - ${status}`}
+        title={
+          isOccupied
+            ? `Seat ${seatNumber} - Already Booked`
+            : isLocked
+            ? `Seat ${seatNumber} - Temporarily Reserved by Another User`
+            : `Seat ${seatNumber} (${position}) - Available`
+        }
         className={`relative w-8 h-8 sm:w-10 sm:h-10 rounded-xl border-2 flex flex-col items-center justify-center transition-all duration-200 text-xs ${colorStyles}`}
       >
         <span className="font-semibold text-[11px] leading-none">{col}</span>
         {isSelected ? (
           <Check className="w-3 h-3 text-white mt-0.5 animate-scaleUp" />
+        ) : isOccupied ? (
+          <Lock className="w-2.5 h-2.5 text-slate-400 mt-0.5" />
+        ) : isLocked ? (
+          <Clock className="w-2.5 h-2.5 text-amber-500 mt-0.5 animate-pulse" />
         ) : (
           <span className="text-[8px] opacity-70 leading-none mt-0.5">
             {position[0]}
@@ -109,9 +133,34 @@ const SeatMapComponent = ({
   };
 
   return (
-    <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm max-w-2xl mx-auto">
+    <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm max-w-2xl mx-auto space-y-4">
+      {/* Real-time Seat Availability Bar & Refresh */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span className="text-xs font-bold text-navy uppercase tracking-wider">Real-Time Seat Availability</span>
+          {lastUpdated && (
+            <span className="text-[10px] text-slate-400">
+              Updated: {new Date(lastUpdated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            </span>
+          )}
+        </div>
+
+        {onRefresh && (
+          <button
+            type="button"
+            onClick={onRefresh}
+            disabled={isRefreshing}
+            className="self-start sm:self-auto px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-bold text-navy transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+          >
+            <RefreshCw className={`w-3 h-3 text-skyblue ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span>{isRefreshing ? 'Refreshing...' : 'Refresh Seats'}</span>
+          </button>
+        )}
+      </div>
+
       {/* Plane Nose Indicator */}
-      <div className="flex flex-col items-center justify-center mb-6">
+      <div className="flex flex-col items-center justify-center pt-2 mb-4">
         <div className="w-32 h-10 border-t-2 border-x-2 border-slate-300 rounded-t-full flex items-center justify-center bg-slate-50 text-[11px] font-bold tracking-widest text-slate-400 uppercase">
           Cockpit / Front
         </div>
@@ -174,8 +223,16 @@ const SeatMapComponent = ({
           <span>Selected</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-4 h-4 rounded bg-slate-200 border border-slate-300"></div>
-          <span>Occupied</span>
+          <div className="w-4 h-4 rounded bg-amber-50 border border-amber-300 flex items-center justify-center text-[9px] text-amber-600 font-bold">
+            <Clock className="w-2.5 h-2.5" />
+          </div>
+          <span>Reserved (Held)</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-4 h-4 rounded bg-slate-100 border border-slate-300 flex items-center justify-center text-[9px] text-slate-400">
+            <Lock className="w-2.5 h-2.5" />
+          </div>
+          <span>Booked</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="font-bold text-slate-400">W</span>

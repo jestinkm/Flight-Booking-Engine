@@ -29,8 +29,19 @@ const bookingSeatSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['ASSIGNED', 'RELEASED'],
-      default: 'ASSIGNED'
+      enum: ['ASSIGNED', 'LOCKED', 'RELEASED'],
+      default: 'ASSIGNED',
+      index: true
+    },
+    lockedUntil: {
+      type: Date,
+      default: null,
+      index: true
+    },
+    lockedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
     }
   },
   {
@@ -43,5 +54,6 @@ bookingSeatSchema.index(
   { flightInstanceId: 1, seatNumber: 1 },
   { unique: true, partialFilterExpression: { status: 'ASSIGNED' } }
 );
+bookingSeatSchema.index({ status: 1, lockedUntil: 1 });
 
 module.exports = mongoose.model('BookingSeat', bookingSeatSchema);

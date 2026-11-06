@@ -4,6 +4,8 @@ const FlightSchedule = require('../models/FlightSchedule');
 const FlightInstance = require('../models/FlightInstance');
 const AircraftLayout = require('../models/AircraftLayout');
 const Booking = require('../models/Booking');
+const BookingPassenger = require('../models/BookingPassenger');
+const BookingSeat = require('../models/BookingSeat');
 const User = require('../models/User');
 const Payment = require('../models/Payment');
 const AuditLog = require('../models/AuditLog');
@@ -1294,14 +1296,29 @@ const getLayoutById = async (req, res, next) => {
 const getAllBookings = async (req, res, next) => {
   try {
     const page = parseInt(req.query.page, 10) || 1;
-    const limit = parseInt(req.query.limit, 10) || 20;
+    const limit = parseInt(req.query.limit, 10) || 50;
     const skip = (page - 1) * limit;
 
     const filter = {};
-    if (req.query.status) filter.status = req.query.status.toUpperCase();
-    if (req.query.flightInstanceId) filter.flightInstanceId = req.query.flightInstanceId;
+    if (req.query.status && req.query.status.toUpperCase() !== 'ALL') {
+      filter.status = req.query.status.toUpperCase();
+    }
+    if (req.query.flightInstanceId) {
+      filter.flightInstanceId = req.query.flightInstanceId;
+    }
 
-    const [bookings, total] = await Promise.all([
+    // Support search across PNR, contact email, and phone
+    if (req.query.search && req.query.search.trim()) {
+      const q = req.query.search.trim();
+      const searchRegex = new RegExp(q, 'i');
+      filter.$or = [
+        { bookingReference: searchRegex },
+        { contactEmail: searchRegex },
+        { contactPhone: searchRegex }
+      ];
+    }
+
+    const [bookings, total, statsCounts, seatStats] = await Promise.all([
       Booking.find(filter)
         .populate('userId', 'username email firstName lastName phone')
         .populate({
@@ -1310,20 +1327,78 @@ const getAllBookings = async (req, res, next) => {
             path: 'flightId',
             populate: [
               { path: 'originAirportId', model: 'Airport' },
-              { path: 'destinationAirportId', model: 'Airport' }
+              { path: 'destinationAirportId', model: 'Airport' },
+              { path: 'aircraftLayoutId', model: 'AircraftLayout' }
             ]
           }
         })
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit),
-      Booking.countDocuments(filter)
+      Booking.countDocuments(filter),
+      Promise.all([
+        Booking.countDocuments({ status: 'CONFIRMED' }),
+        Booking.countDocuments({ status: 'CANCELLED' }),
+        Booking.countDocuments({ status: 'PENDING' }),
+        Booking.countDocuments()
+      ]),
+      Promise.all([
+        BookingSeat.countDocuments({ status: 'ASSIGNED' }),
+        BookingSeat.countDocuments({ status: 'LOCKED', lockedUntil: { $gt: new Date() } }),
+        FlightInstance.aggregate([
+          { $match: { status: { $in: ['SCHEDULED', 'ON_TIME', 'DELAYED'] } } },
+          { $group: { _id: null, totalCapacity: { $sum: '$capacity' } } }
+        ])
+      ])
     ]);
+
+    const bookingIds = bookings.map((b) => b._id);
+    const [passengersList, paymentsList] = await Promise.all([
+      BookingPassenger.find({ bookingId: { $in: bookingIds } }).lean(),
+      Payment.find({ bookingId: { $in: bookingIds } }).sort({ createdAt: -1 }).lean()
+    ]);
+
+    const passengersByBooking = new Map();
+    passengersList.forEach((p) => {
+      const bId = p.bookingId.toString();
+      if (!passengersByBooking.has(bId)) passengersByBooking.set(bId, []);
+      passengersByBooking.get(bId).push(p);
+    });
+
+    const paymentsByBooking = new Map();
+    paymentsList.forEach((pmt) => {
+      const bId = pmt.bookingId.toString();
+      if (!paymentsByBooking.has(bId)) paymentsByBooking.set(bId, pmt);
+    });
+
+    const enrichedBookings = bookings.map((b) => {
+      const bObj = b.toObject({ virtuals: true });
+      const bId = b._id.toString();
+      bObj.passengers = passengersByBooking.get(bId) || [];
+      bObj.payment = paymentsByBooking.get(bId) || null;
+      bObj.seatNumbers = bObj.passengers.map((p) => p.seatNumber).filter(Boolean);
+      return bObj;
+    });
+
+    const [confirmedCount, cancelledCount, pendingCount, totalCount] = statsCounts;
+    const [assignedSeatsCount, lockedSeatsCount, capacityAgg] = seatStats;
+    const totalFlightSeats = capacityAgg?.[0]?.totalCapacity || 180 * 10;
+    const availableSeatsCount = Math.max(0, totalFlightSeats - assignedSeatsCount - lockedSeatsCount);
 
     res.json({
       success: true,
       data: {
-        bookings,
+        bookings: enrichedBookings,
+        stats: {
+          totalBookings: totalCount,
+          confirmedBookings: confirmedCount,
+          cancelledBookings: cancelledCount,
+          pendingBookings: pendingCount,
+          totalSeats: totalFlightSeats,
+          availableSeats: availableSeatsCount,
+          reservedSeats: lockedSeatsCount,
+          confirmedSeats: assignedSeatsCount
+        },
         pagination: {
           page,
           limit,
@@ -1490,7 +1565,135 @@ const updateFlightPricing = async (req, res, next) => {
   }
 };
 
+
+/* ==================== FLIGHT SEAT SHEET MANIFEST ==================== */
+
+const getFlightSeatSheet = async (req, res, next) => {
+  try {
+    const { instanceId } = req.params;
+    if (!instanceId || !instanceId.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ success: false, message: 'Invalid flight instance identifier' });
+    }
+
+    const instance = await FlightInstance.findById(instanceId)
+      .populate({
+        path: 'flightId',
+        populate: [
+          { path: 'originAirportId', model: 'Airport' },
+          { path: 'destinationAirportId', model: 'Airport' },
+          { path: 'aircraftLayoutId', model: 'AircraftLayout' }
+        ]
+      });
+
+    if (!instance) {
+      return res.status(404).json({ success: false, message: 'Flight departure instance not found' });
+    }
+
+    const layout = instance.flightId?.aircraftLayoutId;
+    if (!layout) {
+      return res.status(404).json({ success: false, message: 'Aircraft layout not found for this flight' });
+    }
+
+    const { releaseExpiredSeatLocks } = require('../services/seatAllocationService');
+    await releaseExpiredSeatLocks(instance._id);
+
+    const now = new Date();
+    const activeSeats = await BookingSeat.find({
+      flightInstanceId: instance._id,
+      $or: [
+        { status: 'ASSIGNED' },
+        { status: 'LOCKED', lockedUntil: { $gt: now } }
+      ]
+    })
+      .populate('passengerId', 'firstName lastName type aadhaarNumber')
+      .populate('bookingId', 'bookingReference status contactEmail contactPhone')
+      .lean();
+
+    const seatDataMap = new Map();
+    activeSeats.forEach((s) => seatDataMap.set(s.seatNumber, s));
+
+    let availableCount = 0;
+    let bookedCount = 0;
+    let reservedCount = 0;
+
+    const manifestSeats = (layout.seatDefinitions || []).map((def) => {
+      let status = 'AVAILABLE';
+      const record = seatDataMap.get(def.seatNumber);
+
+      if (def.active === false) {
+        status = 'BLOCKED';
+      } else if (record) {
+        if (record.status === 'ASSIGNED') {
+          status = 'ASSIGNED';
+          bookedCount++;
+        } else if (record.status === 'LOCKED') {
+          status = 'LOCKED';
+          reservedCount++;
+        }
+      } else {
+        availableCount++;
+      }
+
+      return {
+        seatNumber: def.seatNumber,
+        row: def.row,
+        column: def.column,
+        position: def.position,
+        status,
+        passenger: record?.passengerId
+          ? {
+              name: `${record.passengerId.firstName} ${record.passengerId.lastName}`,
+              type: record.passengerId.type
+            }
+          : null,
+        booking: record?.bookingId
+          ? {
+              pnr: record.bookingId.bookingReference,
+              status: record.bookingId.status,
+              contactEmail: record.bookingId.contactEmail
+            }
+          : null,
+        lockedUntil: record?.lockedUntil || null
+      };
+    });
+
+    res.json({
+      success: true,
+      data: {
+        instance: {
+          id: instance._id,
+          flightNumber: instance.flightId?.flightNumber,
+          flightName: instance.flightId?.flightName,
+          route: `${instance.flightId?.originAirportId?.code || 'DEL'} → ${instance.flightId?.destinationAirportId?.code || 'BOM'}`,
+          origin: instance.flightId?.originAirportId?.city || 'Delhi',
+          destination: instance.flightId?.destinationAirportId?.city || 'Mumbai',
+          departureDateTime: instance.departureDateTime,
+          status: instance.status,
+          capacity: instance.capacity,
+          bookedCount: instance.bookedCount
+        },
+        layout: {
+          name: layout.name,
+          type: layout.type,
+          rows: layout.rows,
+          seatsPerRow: layout.seatsPerRow
+        },
+        seats: manifestSeats,
+        stats: {
+          totalSeats: (layout.seatDefinitions || []).filter((s) => s.active !== false).length,
+          availableSeats: availableCount,
+          bookedSeats: bookedCount,
+          reservedSeats: reservedCount
+        }
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
+  getFlightSeatSheet,
   createFlight,
   listFlights,
   getFlightById,

@@ -4,6 +4,82 @@ const AircraftLayout = require('../models/AircraftLayout');
 const BookingSeat = require('../models/BookingSeat');
 
 /**
+ * Release temporary seat locks that have exceeded their expiration time
+ * @param {string|ObjectId|null} flightInstanceId
+ */
+const releaseExpiredSeatLocks = async (flightInstanceId = null) => {
+  try {
+    const query = {
+      status: 'LOCKED',
+      lockedUntil: { $lte: new Date() }
+    };
+    if (flightInstanceId) {
+      query.flightInstanceId = flightInstanceId;
+    }
+    await BookingSeat.deleteMany(query);
+  } catch (err) {
+    console.warn('[SeatAllocation] Notice releasing expired locks:', err.message);
+  }
+};
+
+/**
+ * Lock seats temporarily for a pending booking (e.g. 5 minutes)
+ */
+const lockSeatsForBooking = async ({
+  flightInstanceId,
+  bookingId,
+  passengerSeats = [], // Array<{ passengerId, seatNumber, position }>
+  userId = null,
+  durationMinutes = 5,
+  session = null
+}) => {
+  if (!passengerSeats || passengerSeats.length === 0) return [];
+
+  // Release expired locks first
+  await releaseExpiredSeatLocks(flightInstanceId);
+
+  const seatNumbers = passengerSeats.map((s) => s.seatNumber);
+  const now = new Date();
+  const lockedUntil = new Date(now.getTime() + durationMinutes * 60 * 1000);
+
+  // Check if any requested seat is already ASSIGNED or actively LOCKED by someone else
+  const conflicts = await BookingSeat.find({
+    flightInstanceId,
+    seatNumber: { $in: seatNumbers },
+    $or: [
+      { status: 'ASSIGNED' },
+      {
+        status: 'LOCKED',
+        lockedUntil: { $gt: now },
+        ...(userId ? { lockedBy: { $ne: userId } } : {})
+      }
+    ]
+  }).session(session);
+
+  if (conflicts.length > 0) {
+    const conflictList = conflicts.map((c) => c.seatNumber).join(', ');
+    throw new Error(`Another user has just reserved seat ${conflictList}. Please refresh and select another available seat.`);
+  }
+
+  // Remove any previous locks for this exact booking to prevent duplicates
+  await BookingSeat.deleteMany({ bookingId, status: 'LOCKED' }).session(session);
+
+  // Insert temporary lock records
+  const lockDocs = passengerSeats.map((ps) => ({
+    flightInstanceId,
+    bookingId,
+    passengerId: ps.passengerId,
+    seatNumber: ps.seatNumber,
+    position: ps.position || 'AISLE',
+    status: 'LOCKED',
+    lockedUntil,
+    lockedBy: userId
+  }));
+
+  return await BookingSeat.insertMany(lockDocs, { session });
+};
+
+/**
  * Priority order for seat allocation:
  * 1. WINDOW
  * 2. AISLE
@@ -48,16 +124,23 @@ const allocateSeats = async (flightInstanceId, count, policy = 'GROUP_PREFERENCE
   // 3. Get all active seat definitions
   const activeDefinitions = layout.seatDefinitions.filter((s) => s.active !== false);
 
-  // 4. Get currently assigned seats
-  const assignedSeats = await BookingSeat.find({
+  // 4. Release expired seat locks first
+  await releaseExpiredSeatLocks(flightInstanceId);
+
+  // 5. Get currently occupied seats (both confirmed ASSIGNED and actively LOCKED)
+  const now = new Date();
+  const occupiedSeats = await BookingSeat.find({
     flightInstanceId,
-    status: 'ASSIGNED'
+    $or: [
+      { status: 'ASSIGNED' },
+      { status: 'LOCKED', lockedUntil: { $gt: now } }
+    ]
   }).session(session).select('seatNumber');
 
-  const assignedSet = new Set(assignedSeats.map((s) => s.seatNumber));
+  const occupiedSet = new Set(occupiedSeats.map((s) => s.seatNumber));
 
-  // 5. Filter available seats
-  const availableSeats = activeDefinitions.filter((s) => !assignedSet.has(s.seatNumber));
+  // 6. Filter available seats
+  const availableSeats = activeDefinitions.filter((s) => !occupiedSet.has(s.seatNumber));
 
   if (availableSeats.length < count) {
     throw new Error(`Not enough seats available. Requested: ${count}, Available: ${availableSeats.length}`);
@@ -153,20 +236,41 @@ const getSeatMap = async (flightInstanceId) => {
     throw new Error('Aircraft layout not found');
   }
 
-  const assignedSeats = await BookingSeat.find({
-    flightInstanceId,
-    status: 'ASSIGNED'
-  }).select('seatNumber passengerId position');
+  // Release expired locks first
+  await releaseExpiredSeatLocks(flightInstanceId);
 
-  const assignedMap = new Map();
-  assignedSeats.forEach((s) => assignedMap.set(s.seatNumber, s));
+  const now = new Date();
+  const occupiedSeats = await BookingSeat.find({
+    flightInstanceId,
+    $or: [
+      { status: 'ASSIGNED' },
+      { status: 'LOCKED', lockedUntil: { $gt: now } }
+    ]
+  }).select('seatNumber passengerId position status lockedUntil');
+
+  const occupiedMap = new Map();
+  occupiedSeats.forEach((s) => occupiedMap.set(s.seatNumber, s));
+
+  let availableCount = 0;
+  let bookedCount = 0;
+  let reservedCount = 0;
 
   const seats = layout.seatDefinitions.map((def) => {
     let status = 'AVAILABLE';
+    const occ = occupiedMap.get(def.seatNumber);
+
     if (def.active === false) {
       status = 'BLOCKED';
-    } else if (assignedMap.has(def.seatNumber)) {
-      status = 'ASSIGNED';
+    } else if (occ) {
+      if (occ.status === 'ASSIGNED') {
+        status = 'ASSIGNED';
+        bookedCount++;
+      } else if (occ.status === 'LOCKED') {
+        status = 'LOCKED';
+        reservedCount++;
+      }
+    } else {
+      availableCount++;
     }
 
     return {
@@ -185,11 +289,19 @@ const getSeatMap = async (flightInstanceId) => {
       rows: layout.rows,
       seatsPerRow: layout.seatsPerRow
     },
-    seats
+    seats,
+    stats: {
+      totalSeats: layout.seatDefinitions.filter((s) => s.active !== false).length,
+      availableSeats: availableCount,
+      bookedSeats: bookedCount,
+      reservedSeats: reservedCount
+    }
   };
 };
 
 module.exports = {
   allocateSeats,
-  getSeatMap
+  getSeatMap,
+  releaseExpiredSeatLocks,
+  lockSeatsForBooking
 };

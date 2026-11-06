@@ -20,6 +20,8 @@ const FlightDetails = () => {
 
   const [flightData, setFlightData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refreshingSeats, setRefreshingSeats] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(Date.now());
   const [selectedSeats, setSelectedSeats] = useState([]);
 
   // Adjust selected seats if passenger count is decreased
@@ -28,6 +30,53 @@ const FlightDetails = () => {
       setSelectedSeats((prev) => prev.slice(0, totalPassengers));
     }
   }, [totalPassengers, selectedSeats.length]);
+
+  const fetchSeatsOnly = async (showToast = false) => {
+    if (!instanceId) return;
+    setRefreshingSeats(true);
+    try {
+      const seatRes = await api.get(`/flights/instance/${instanceId}/seats`);
+      const seatData = seatRes.data?.data?.seats || seatRes.data?.seats;
+      if (seatData && Array.isArray(seatData)) {
+        setFlightData((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            seats: seatData,
+            seatStats: seatRes.data?.data?.stats || null
+          };
+        });
+        setLastUpdated(Date.now());
+
+        // Check if any currently selected seat was just taken by another user
+        const takenSet = new Set(
+          seatData
+            .filter((s) => s.status === 'ASSIGNED' || s.status === 'OCCUPIED' || s.status === 'LOCKED')
+            .map((s) => s.seatNumber)
+        );
+
+        setSelectedSeats((prevSelected) => {
+          const conflicting = prevSelected.filter((s) => takenSet.has(s));
+          if (conflicting.length > 0) {
+            toast.error(
+              `Notice: Seat ${conflicting.join(', ')} was just reserved by another user. Please pick another available seat.`,
+              { duration: 5000 }
+            );
+            return prevSelected.filter((s) => !takenSet.has(s));
+          }
+          return prevSelected;
+        });
+
+        if (showToast) {
+          toast.success('Live seat availability refreshed!');
+        }
+      }
+    } catch {
+      // Background poll failure notice
+    } finally {
+      setRefreshingSeats(false);
+    }
+  };
 
   useEffect(() => {
     const fetchFlightInstance = async () => {
@@ -47,6 +96,7 @@ const FlightDetails = () => {
             const seatData = seatRes.data?.data?.seats || seatRes.data?.seats;
             if (seatData && seatData.length > 0) {
               data.seats = seatData;
+              data.seatStats = seatRes.data?.data?.stats || null;
             }
           } catch {
             // fallback
@@ -54,6 +104,7 @@ const FlightDetails = () => {
         }
 
         setFlightData(data);
+        setLastUpdated(Date.now());
       } catch (err) {
         setFlightData(null);
         toast.error('Flight instance not found');
@@ -64,6 +115,15 @@ const FlightDetails = () => {
 
     fetchFlightInstance();
   }, [instanceId, searchParams]);
+
+  // Polling for real-time seat availability every 6 seconds
+  useEffect(() => {
+    if (!instanceId) return;
+    const interval = setInterval(() => {
+      fetchSeatsOnly(false);
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [instanceId]);
 
   const handleSeatSelect = (seatNumber) => {
     if (selectedSeats.includes(seatNumber)) {
@@ -347,6 +407,10 @@ const FlightDetails = () => {
                 selectedSeats={selectedSeats}
                 onSeatSelect={handleSeatSelect}
                 maxSelectable={totalPassengers}
+                onRefresh={() => fetchSeatsOnly(true)}
+                isRefreshing={refreshingSeats}
+                lastUpdated={lastUpdated}
+                stats={flightData.seatStats}
               />
             </div>
           </div>

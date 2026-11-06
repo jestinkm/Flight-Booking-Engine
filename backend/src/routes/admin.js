@@ -20,6 +20,7 @@ const {
   listLayouts,
   getLayoutById,
   getAllBookings,
+  getFlightSeatSheet,
   getDashboardStats
 } = require('../controllers/adminController');
 const authenticate = require('../middleware/authenticate');
@@ -33,8 +34,9 @@ router.use(authenticate);
 // Dashboard stats
 router.get('/stats', allowRoles('SUPER_ADMIN', 'SCHEDULE_ADMIN'), getDashboardStats);
 
-// Bookings management
+// Bookings management & Smart Booking Sheet
 router.get('/bookings', allowRoles('SUPER_ADMIN', 'SCHEDULE_ADMIN'), getAllBookings);
+router.get('/bookings/flight-sheet/:instanceId', allowRoles('SUPER_ADMIN', 'SCHEDULE_ADMIN'), getFlightSeatSheet);
 
 // Flight CRUD
 router.post(
